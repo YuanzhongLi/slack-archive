@@ -1,0 +1,55 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(make lint)",
+      "Bash(make lint-fix)",
+      "Bash(make format)",
+      "Bash(make typecheck)",
+      "Bash(make build)",
+      "Bash(make dev)",
+      "Bash(make preview)",
+      "Bash(npm run *)",
+      "Bash(npx astro *)",
+      "Bash(npx biome *)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git fetch*)",
+      "Bash(git status*)",
+      "Bash(git branch*)",
+      "Bash(git show*)",
+      "Bash(gh pr view*)",
+      "Bash(gh pr list*)",
+      "Bash(gh pr diff*)",
+      "Bash(gh pr checkout*)",
+      "Bash(gh pr create*)",
+      "Bash(gh issue view*)",
+      "Bash(gh issue list*)",
+      "Bash(gh run view*)",
+      "Bash(gh repo view*)",
+      "Bash(gh api -X GET*)",
+      "Edit(.claude/current-phase.md)",
+      "Write(.claude/current-phase.md)",
+      "Read(.claude/tmp/**)",
+      "Edit(.claude/tmp/**)",
+      "Write(.claude/tmp/**)",
+      "Bash(mkdir -p .claude/tmp)",
+      "Bash(mkdir -p .claude/tmp*)",
+      "Bash(rm .claude/tmp/*)",
+      "Bash(rm -f .claude/tmp/*)",
+      "Write(docs/*)"
+    ],
+    "deny": [
+      "Bash(gh pr merge:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Edit(.env)",
+      "Write(.env)",
+      "Edit(.dev.vars)",
+      "Write(.dev.vars)"
+    ]
+  },
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  }
+}
