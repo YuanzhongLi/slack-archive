@@ -87,7 +87,11 @@ export function createSlackClient(token: string) {
     await client.conversations.join({ channel: channelId });
   }
 
-  async function fetchMessages(channelId: string, oldest?: string): Promise<SlackMessage[]> {
+  async function fetchMessages(
+    channelId: string,
+    oldest?: string,
+    latest?: string,
+  ): Promise<SlackMessage[]> {
     const results: SlackMessage[] = [];
     let cursor: string | undefined;
 
@@ -97,6 +101,7 @@ export function createSlackClient(token: string) {
         channel: channelId,
         limit: 200,
         oldest,
+        latest,
         cursor,
       });
 

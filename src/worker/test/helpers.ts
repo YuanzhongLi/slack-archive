@@ -13,6 +13,7 @@ const MIGRATION_FILES = [
   '0000_pale_hellcat.sql',
   '0001_whole_gateway.sql',
   '0002_cuddly_swarm.sql',
+  '0003_tidy_meltdown.sql',
 ];
 
 export function createTestDb(): Db {

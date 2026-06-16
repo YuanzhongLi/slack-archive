@@ -72,9 +72,22 @@ export const threads = sqliteTable(
   ],
 );
 
+export const syncLogs = sqliteTable('sync_logs', {
+  id: text('id').primaryKey(),
+  triggeredBy: text('triggered_by').notNull(), // 'cron' | 'manual'
+  userEmail: text('user_email'),
+  channelCount: integer('channel_count'),
+  messageCount: integer('message_count'),
+  status: text('status').notNull(), // 'success' | 'error'
+  errorMessage: text('error_message'),
+  startedAt: text('started_at').notNull(),
+  completedAt: text('completed_at'),
+});
+
 export type User = typeof users.$inferSelect;
 export type UserInsert = typeof users.$inferInsert;
 export type Channel = typeof channels.$inferSelect;
 export type SlackUser = typeof slackUsers.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type Thread = typeof threads.$inferSelect;
+export type SyncLog = typeof syncLogs.$inferSelect;

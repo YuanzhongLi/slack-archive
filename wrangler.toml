@@ -10,7 +10,7 @@ enabled = true
 directory = "./dist/client"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
-run_worker_first = ["/api/*", "/management*"]
+run_worker_first = ["/api/*"]
 
 # Non-secret runtime vars
 # DEV_USER_EMAIL must be explicitly empty in production to prevent auth bypass.

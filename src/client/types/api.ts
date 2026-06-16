@@ -30,3 +30,19 @@ export type ThreadReply = {
   text: string;
   user: SlackUser;
 };
+
+export type SyncLog = {
+  id: string;
+  triggeredBy: 'cron' | 'manual';
+  userEmail: string | null;
+  channelCount: number | null;
+  messageCount: number | null;
+  status: 'success' | 'error';
+  errorMessage: string | null;
+  startedAt: string;
+  completedAt: string | null;
+};
+
+export type SyncLogsResponse = {
+  logs: SyncLog[];
+};

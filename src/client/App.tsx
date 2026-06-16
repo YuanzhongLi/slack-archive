@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import ChannelList from './components/ChannelList';
 import MessageList from './components/MessageList';
+import ManagementPage from './pages/ManagementPage';
 import ThreadPanel from './components/ThreadPanel';
 
 type User = {
@@ -77,15 +78,21 @@ function App() {
         </nav>
         {(user.role === 'root' || user.role === 'admin') && (
           <div className="p-4 border-t border-gray-700">
-            <a href="/management" className="text-sm text-gray-400 hover:text-white">
+            <button
+              type="button"
+              onClick={() => navigate('/management/sync')}
+              className="text-sm text-gray-400 hover:text-white"
+            >
               Management
-            </a>
+            </button>
           </div>
         )}
       </aside>
 
       <main className="flex-1 flex flex-col overflow-hidden">
         <Routes>
+          <Route path="/management" element={<Navigate to="/management/sync" replace />} />
+          <Route path="/management/sync" element={<ManagementPage />} />
           <Route
             path="/channels/:channelId"
             element={

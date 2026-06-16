@@ -12,6 +12,13 @@ setup:
 	$(MAKE) db-migrate-local
 	npx wrangler types
 
+## ローカル開発の初回セットアップ（.dev.vars の DEV_USER_EMAIL を設定してから実行）
+init-setup-local:
+	npm install
+	$(MAKE) db-setup-local
+	npx wrangler types
+	@echo "Done. Run 'make dev' to start the development server."
+
 ## 開発サーバー起動
 dev:
 	npm run dev
@@ -127,4 +134,4 @@ help:
 	@grep -B1 -E '^[a-zA-Z0-9_%.-]+:' $(MAKEFILE_LIST) | \
 		awk '/^## /{desc=substr($$0,4)} /^[a-zA-Z0-9_%.-]+:/ && !/^\.PHONY/{split($$0,a,":"); printf "  \033[36m%-25s\033[0m %s\n", a[1], desc; desc=""}'
 
-.PHONY: setup dev build preview format lint lint-fix typecheck test test-coverage check ci deploy db-migrate-local db-migrate-remote db-reset-local db-setup-local db-generate wrangler-types clean-screenshots help
+.PHONY: setup init-setup-local dev build preview format lint lint-fix typecheck test test-coverage check ci deploy db-migrate-local db-migrate-remote db-reset-local db-setup-local db-generate wrangler-types clean-screenshots help

@@ -32,14 +32,15 @@
   - [x] チャンネル一覧サイドバー
   - [x] メッセージ表示（ユーザーアイコン・表示名・タイムスタンプ）
   - [x] スレッド展開表示
-  - [ ] `/management` ページ（手動同期ボタン・同期履歴・Cronスケジュール設定）
+  - [x] `/management` ページ（手動同期ボタン・同期履歴・Cronスケジュール設定）
 
 ## Phase 4: Should機能
 - ゴール: 実用性向上
 - タスク:
   - [ ] メッセージ検索
   - [ ] 同期ログ・履歴表示
-  - [ ] ユーザー管理UI（追加・削除）
+  - [ ] ユーザー管理UI（追加・削除）: [issue #9](https://github.com/YuanzhongLi/slack-archive/issues/9)
+  - [ ] i18n対応（日英切替）: [issue #10](https://github.com/YuanzhongLi/slack-archive/issues/10)
 
 ## 将来（Phase 5以降）
 - ファイル添付アーカイブ（R2連携）
