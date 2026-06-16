@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, sql } from 'drizzle-orm';
+import { and, eq, gt, isNotNull, lt, sql } from 'drizzle-orm';
 import type { Db } from '../../db/client';
 import { channels, messages, slackUsers, threads } from '../../db/schema';
 import type { Logger } from '../../lib/logger';
@@ -166,6 +166,127 @@ export async function syncExistingThreadsForChannel(
       : undefined;
     await syncRepliesForParent(db, client, channelRow, parent.slackTs, oldest);
   }
+}
+
+export async function fullResyncWindowForChannel(
+  db: Db,
+  client: SlackClient,
+  channelRow: { id: string; slackChannelId: string },
+  oldest: string,
+  latest: string,
+): Promise<void> {
+  await client.joinChannel(channelRow.slackChannelId);
+
+  const slackMessages = await client.fetchMessages(channelRow.slackChannelId, oldest, latest);
+
+  // Upsert all messages in the window (reflects edits)
+  for (const msg of slackMessages) {
+    await db
+      .insert(messages)
+      .values({
+        id: generateId(),
+        slackTs: msg.ts,
+        channelId: channelRow.id,
+        userSlackId: msg.user ?? null,
+        text: msg.text ?? '',
+        threadTs: msg.thread_ts ?? null,
+        createdAt: new Date(Number(msg.ts) * 1000).toISOString(),
+      })
+      .onConflictDoUpdate({
+        target: [messages.channelId, messages.slackTs],
+        set: { text: msg.text ?? '', threadTs: msg.thread_ts ?? null },
+      });
+  }
+
+  // Delete messages in the window that no longer exist in Slack (reflects deletions)
+  const apiTsSet = new Set(slackMessages.map((m) => m.ts));
+  const dbMessages = await db
+    .select({ slackTs: messages.slackTs })
+    .from(messages)
+    .where(
+      and(
+        eq(messages.channelId, channelRow.id),
+        gt(messages.slackTs, oldest),
+        lt(messages.slackTs, latest),
+      ),
+    )
+    .all();
+
+  for (const row of dbMessages) {
+    if (!apiTsSet.has(row.slackTs)) {
+      await db
+        .delete(messages)
+        .where(and(eq(messages.channelId, channelRow.id), eq(messages.slackTs, row.slackTs)));
+      // Also delete associated thread replies
+      await db
+        .delete(threads)
+        .where(and(eq(threads.channelId, channelRow.id), eq(threads.parentTs, row.slackTs)));
+    }
+  }
+
+  // Full resync threads for thread parents in the window
+  const threadParents = slackMessages.filter((m) => m.thread_ts && m.thread_ts === m.ts);
+  for (const parent of threadParents) {
+    const replies = await client.fetchThreadReplies(channelRow.slackChannelId, parent.ts);
+    const apiReplyTsSet = new Set(replies.map((r) => r.ts));
+
+    // Upsert all replies
+    for (const reply of replies) {
+      await db
+        .insert(threads)
+        .values({
+          id: generateId(),
+          parentTs: parent.ts,
+          channelId: channelRow.id,
+          userSlackId: reply.user ?? null,
+          text: reply.text ?? '',
+          slackTs: reply.ts,
+          createdAt: new Date(Number(reply.ts) * 1000).toISOString(),
+        })
+        .onConflictDoUpdate({
+          target: [threads.channelId, threads.slackTs],
+          set: { text: reply.text ?? '' },
+        });
+    }
+
+    // Delete replies that no longer exist in Slack
+    const dbReplies = await db
+      .select({ slackTs: threads.slackTs })
+      .from(threads)
+      .where(and(eq(threads.channelId, channelRow.id), eq(threads.parentTs, parent.ts)))
+      .all();
+
+    for (const row of dbReplies) {
+      if (!apiReplyTsSet.has(row.slackTs)) {
+        await db
+          .delete(threads)
+          .where(and(eq(threads.channelId, channelRow.id), eq(threads.slackTs, row.slackTs)));
+      }
+    }
+  }
+}
+
+export async function fullResyncAll(env: Env, db: Db, logger: Logger): Promise<void> {
+  if (!env.SLACK_BOT_TOKEN) {
+    throw new Error('SLACK_BOT_TOKEN is not configured');
+  }
+  const client = createSlackClient(env.SLACK_BOT_TOKEN);
+  const log = logger.child({ service: 'fullResyncAll' });
+
+  // Window: 90 days ago to 87 days ago (within Slack's free plan 90-day retention)
+  const nowSec = Math.floor(Date.now() / 1000);
+  const oldest = String(nowSec - 90 * 24 * 60 * 60);
+  const latest = String(nowSec - 87 * 24 * 60 * 60);
+
+  log.info('full resync window started', { oldest, latest });
+
+  const allChannels = await db.select().from(channels).all();
+  for (const ch of allChannels) {
+    await fullResyncWindowForChannel(db, client, ch, oldest, latest);
+    log.info('channel full resynced', { channel: ch.name });
+  }
+
+  log.info('full resync window completed', { channelCount: allChannels.length });
 }
 
 export async function syncAll(

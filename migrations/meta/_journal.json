@@ -22,6 +22,13 @@
       "when": 1781581376515,
       "tag": "0002_cuddly_swarm",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1781617973411,
+      "tag": "0003_tidy_meltdown",
+      "breakpoints": true
     }
   ]
 }
