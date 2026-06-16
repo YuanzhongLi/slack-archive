@@ -3,8 +3,9 @@ import { authMiddleware } from './middleware/auth';
 import type { User } from './middleware/auth';
 import { createLogger } from './lib/logger';
 import type { Logger } from './lib/logger';
-import usersRouter from './routes/users';
+import channelsRouter from './routes/channels';
 import syncRouter from './routes/sync';
+import usersRouter from './routes/users';
 
 const app = new Hono<{ Bindings: Env; Variables: { user: User; logger: Logger } }>();
 
@@ -30,6 +31,9 @@ app.get('/api/me', (c) => {
 
 // User management
 app.route('/api/users', usersRouter);
+
+// Channels
+app.route('/api/channels', channelsRouter);
 
 // Sync
 app.route('/api/sync', syncRouter);

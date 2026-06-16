@@ -162,7 +162,10 @@ describe('createLogger — pretty mode', () => {
   });
 
   it('shows truncated requestId (8 chars) when present', () => {
-    const logger = createLogger({ requestId: 'abcdef12-xxxx-yyyy-zzzz-000000000000' }, { pretty: true });
+    const logger = createLogger(
+      { requestId: 'abcdef12-xxxx-yyyy-zzzz-000000000000' },
+      { pretty: true },
+    );
     logger.info('msg');
     const output = logSpy.mock.calls[0][0] as string;
     expect(output).toContain('[abcdef12]');
