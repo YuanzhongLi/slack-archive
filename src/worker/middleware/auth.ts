@@ -33,6 +33,10 @@ type JwtPayload = {
 
 // JWKS in-memory cache (module-level; resets on cold start)
 // TTL: 5 minutes — covers key rotation while minimising fetch overhead
+// NOTE: fetchJwks / verifyJwt / importRsaPublicKey rely on crypto.subtle (Web Crypto API)
+// which is unavailable in the Node.js test environment. These functions are exercised
+// end-to-end by CF Access in production. The middleware control flow (DEV bypass,
+// user lookup, JWT missing/invalid branches) is covered in auth.test.ts.
 const JWKS_TTL_MS = 5 * 60 * 1000;
 type JwksCache = { keys: JwkKey[]; fetchedAt: number };
 const jwksCache = new Map<string, JwksCache>();

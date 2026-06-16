@@ -48,8 +48,12 @@ typecheck:
 test:
 	npm run test
 
-## PR前チェック（format + lint + typecheck + build）
-check: format lint typecheck build
+## テスト実行（coverageレポート付き）
+test-coverage:
+	npm run test:coverage
+
+## PR前チェック（format + lint + typecheck + test + build）
+check: format lint typecheck test build
 
 # ------------------------------------------------------------
 # Cloudflare
