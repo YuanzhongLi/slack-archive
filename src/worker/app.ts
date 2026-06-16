@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { authMiddleware } from './middleware/auth';
 import type { User } from './middleware/auth';
 import usersRouter from './routes/users';
+import syncRouter from './routes/sync';
 
 const app = new Hono<{ Bindings: Env; Variables: { user: User } }>();
 
@@ -19,5 +20,8 @@ app.get('/api/me', (c) => {
 
 // User management
 app.route('/api/users', usersRouter);
+
+// Sync
+app.route('/api/sync', syncRouter);
 
 export { app };

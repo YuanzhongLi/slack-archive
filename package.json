@@ -16,6 +16,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@hono/zod-validator": "^0.8.0",
     "@slack/web-api": "^7.9.0",
     "@tailwindcss/vite": "^4.3.0",
     "clsx": "^2.1.1",

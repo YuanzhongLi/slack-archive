@@ -72,9 +72,24 @@ db-migrate-remote:
 	npx wrangler d1 migrations apply slack-archive-db --remote
 
 ## ローカル D1 を破棄して再構築
-db-reset:
+db-reset-local:
 	rm -rf .wrangler/state/v3/d1
 	$(MAKE) db-migrate-local
+
+## ローカル開発環境の初期化（db-reset-local + migration + root user 投入）
+## DEV_USER_EMAIL が .dev.vars に設定されている場合のみ root user を投入する
+db-setup-local:
+	$(MAKE) db-reset-local
+	@EMAIL=$$(grep '^DEV_USER_EMAIL=' .dev.vars 2>/dev/null | cut -d'=' -f2); \
+	if [ -z "$$EMAIL" ]; then \
+		echo "Warning: DEV_USER_EMAIL is not set in .dev.vars — skipping root user insertion."; \
+		echo "  To insert a root user, set DEV_USER_EMAIL in .dev.vars and re-run 'make db-setup-local'."; \
+	else \
+		echo "Inserting root user: $$EMAIL"; \
+		CI=true npx wrangler d1 execute slack-archive-db --local \
+			--command "INSERT INTO users (id, email, role, created_at, updated_at) VALUES (lower(hex(randomblob(16))), '$$EMAIL', 'root', datetime('now'), datetime('now'));"; \
+	fi
+	@echo "Local DB setup complete. Run 'make dev' to start."
 
 ## Drizzle マイグレーションファイル生成
 db-generate:
@@ -105,4 +120,4 @@ help:
 	@grep -B1 -E '^[a-zA-Z0-9_%.-]+:' $(MAKEFILE_LIST) | \
 		awk '/^## /{desc=substr($$0,4)} /^[a-zA-Z0-9_%.-]+:/ && !/^\.PHONY/{split($$0,a,":"); printf "  \033[36m%-25s\033[0m %s\n", a[1], desc; desc=""}'
 
-.PHONY: setup dev build preview format lint lint-fix typecheck test check deploy db-migrate-local db-migrate-remote db-reset db-generate wrangler-types clean-screenshots help
+.PHONY: setup dev build preview format lint lint-fix typecheck test test-coverage check deploy db-migrate-local db-migrate-remote db-reset-local db-setup-local db-generate wrangler-types clean-screenshots help

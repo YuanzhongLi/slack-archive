@@ -30,7 +30,7 @@ function req(method: string, path: string, body?: unknown, env?: Env): Promise<R
     init.headers = { 'Content-Type': 'application/json' };
     init.body = JSON.stringify(body);
   }
-  return app.request(path, init, env ?? makeMockEnv());
+  return Promise.resolve(app.request(path, init, env ?? makeMockEnv()));
 }
 
 // ---------------------------------------------------------------------------
@@ -39,19 +39,34 @@ function req(method: string, path: string, body?: unknown, env?: Env): Promise<R
 
 describe('GET /api/users', () => {
   it('root can list users', async () => {
-    const res = await req('GET', '/api/users', undefined, makeMockEnv({ DEV_USER_EMAIL: ROOT_EMAIL }));
+    const res = await req(
+      'GET',
+      '/api/users',
+      undefined,
+      makeMockEnv({ DEV_USER_EMAIL: ROOT_EMAIL }),
+    );
     expect(res.status).toBe(200);
     const body = (await res.json()) as unknown[];
     expect(body).toHaveLength(3);
   });
 
   it('admin can list users', async () => {
-    const res = await req('GET', '/api/users', undefined, makeMockEnv({ DEV_USER_EMAIL: ADMIN_EMAIL }));
+    const res = await req(
+      'GET',
+      '/api/users',
+      undefined,
+      makeMockEnv({ DEV_USER_EMAIL: ADMIN_EMAIL }),
+    );
     expect(res.status).toBe(200);
   });
 
   it('viewer cannot list users', async () => {
-    const res = await req('GET', '/api/users', undefined, makeMockEnv({ DEV_USER_EMAIL: VIEWER_EMAIL }));
+    const res = await req(
+      'GET',
+      '/api/users',
+      undefined,
+      makeMockEnv({ DEV_USER_EMAIL: VIEWER_EMAIL }),
+    );
     expect(res.status).toBe(403);
   });
 });
@@ -62,33 +77,58 @@ describe('GET /api/users', () => {
 
 describe('DELETE /api/users/:id', () => {
   it('admin can delete a viewer', async () => {
-    const res = await req('DELETE', '/api/users/viewer-id', undefined, makeMockEnv({ DEV_USER_EMAIL: ADMIN_EMAIL }));
+    const res = await req(
+      'DELETE',
+      '/api/users/viewer-id',
+      undefined,
+      makeMockEnv({ DEV_USER_EMAIL: ADMIN_EMAIL }),
+    );
     expect(res.status).toBe(200);
     const remaining = await db.select().from(schema.users).all();
     expect(remaining.find((u) => u.id === 'viewer-id')).toBeUndefined();
   });
 
   it('cannot delete root user', async () => {
-    const res = await req('DELETE', '/api/users/root-id', undefined, makeMockEnv({ DEV_USER_EMAIL: ADMIN_EMAIL }));
+    const res = await req(
+      'DELETE',
+      '/api/users/root-id',
+      undefined,
+      makeMockEnv({ DEV_USER_EMAIL: ADMIN_EMAIL }),
+    );
     expect(res.status).toBe(403);
     const body = (await res.json()) as { message: string };
     expect(body.message).toMatch(/root/i);
   });
 
   it('cannot delete yourself', async () => {
-    const res = await req('DELETE', '/api/users/admin-id', undefined, makeMockEnv({ DEV_USER_EMAIL: ADMIN_EMAIL }));
+    const res = await req(
+      'DELETE',
+      '/api/users/admin-id',
+      undefined,
+      makeMockEnv({ DEV_USER_EMAIL: ADMIN_EMAIL }),
+    );
     expect(res.status).toBe(403);
     const body = (await res.json()) as { message: string };
     expect(body.message).toMatch(/yourself/i);
   });
 
   it('returns 404 for non-existent user', async () => {
-    const res = await req('DELETE', '/api/users/does-not-exist', undefined, makeMockEnv({ DEV_USER_EMAIL: ADMIN_EMAIL }));
+    const res = await req(
+      'DELETE',
+      '/api/users/does-not-exist',
+      undefined,
+      makeMockEnv({ DEV_USER_EMAIL: ADMIN_EMAIL }),
+    );
     expect(res.status).toBe(404);
   });
 
   it('viewer cannot delete users', async () => {
-    const res = await req('DELETE', '/api/users/admin-id', undefined, makeMockEnv({ DEV_USER_EMAIL: VIEWER_EMAIL }));
+    const res = await req(
+      'DELETE',
+      '/api/users/admin-id',
+      undefined,
+      makeMockEnv({ DEV_USER_EMAIL: VIEWER_EMAIL }),
+    );
     expect(res.status).toBe(403);
   });
 });
@@ -105,7 +145,10 @@ describe('POST /api/users/transfer-root', () => {
   ): Env {
     const batchFn =
       batchImpl ??
-      (async () => [{ results: [], success: true, meta: {} as D1DatabaseSessionMetadata }]);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ((async () => [{ results: [], success: true, meta: {} as unknown }]) as unknown as (
+        stmts: D1PreparedStatement[],
+      ) => Promise<D1Result[]>);
 
     const d1Mock = {
       batch: vi.fn(batchFn),

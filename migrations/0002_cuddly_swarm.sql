@@ -1,0 +1,1 @@
+ALTER TABLE `messages` ADD `replies_last_synced_at` text;
