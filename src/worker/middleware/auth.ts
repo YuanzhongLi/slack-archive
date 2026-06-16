@@ -2,13 +2,10 @@ import { eq } from 'drizzle-orm';
 import type { MiddlewareHandler } from 'hono';
 import { createDb } from '../db/client';
 import { users } from '../db/schema';
+import type { Logger } from '../lib/logger';
 
 export type { User } from '../db/schema';
 import type { User } from '../db/schema';
-
-type AuthVariables = {
-  user: User;
-};
 
 type JwkKey = {
   kty: string;
@@ -192,7 +189,7 @@ export function hasRole(user: User, minRole: 'viewer' | 'admin' | 'root'): boole
 
 export const authMiddleware: MiddlewareHandler<{
   Bindings: Env;
-  Variables: AuthVariables;
+  Variables: { user: User; logger: Logger };
 }> = async (c, next) => {
   const db = createDb(c.env.DB);
 
@@ -207,6 +204,7 @@ export const authMiddleware: MiddlewareHandler<{
       return c.json({ status: 'error', message: `Dev user not found: ${devEmail}` }, 403);
     }
     c.set('user', user);
+    c.set('logger', c.get('logger').child({ email: user.email, role: user.role }));
     return next();
   }
 
@@ -243,5 +241,6 @@ export const authMiddleware: MiddlewareHandler<{
   }
 
   c.set('user', user);
+  c.set('logger', c.get('logger').child({ email: user.email, role: user.role }));
   return next();
 };

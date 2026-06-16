@@ -50,7 +50,7 @@
   },
   "overrides": [
     {
-      "includes": ["src/worker.ts"],
+      "includes": ["src/worker.ts", "src/worker/lib/logger.ts"],
       "linter": {
         "rules": {
           "suspicious": {
