@@ -7,6 +7,7 @@ import type { SlackClient, SlackUser } from '../slack/client';
 import { createTestDb, seedUsers } from '../../test/helpers';
 import type { Db } from '../../db/client';
 import { channels, messages, slackUsers, threads } from '../../db/schema';
+import { createLogger } from '../../lib/logger';
 import {
   syncAll,
   syncChannels,
@@ -315,7 +316,7 @@ describe('syncAll', () => {
     });
     createSlackClientMock.mockReturnValue(client);
 
-    const result = await syncAll(mockEnv, db);
+    const result = await syncAll(mockEnv, db, createLogger());
 
     expect(result.channelCount).toBe(2);
     // 2 messages × 2 channels
@@ -341,7 +342,7 @@ describe('syncAll', () => {
     });
     createSlackClientMock.mockReturnValue(client);
 
-    const result = await syncAll(mockEnv, db);
+    const result = await syncAll(mockEnv, db, createLogger());
     expect(result.channelCount).toBe(0);
     expect(result.messageCount).toBe(0);
   });
@@ -350,7 +351,7 @@ describe('syncAll', () => {
     const client = makeSlackClient();
     createSlackClientMock.mockReturnValue(client);
 
-    await syncAll(mockEnv, db);
+    await syncAll(mockEnv, db, createLogger());
 
     expect(createSlackClientMock).toHaveBeenCalledWith('xoxb-test');
   });
@@ -476,7 +477,7 @@ describe('syncExistingThreadsForChannel', () => {
 describe('syncAll — SLACK_BOT_TOKEN guard', () => {
   it('throws when SLACK_BOT_TOKEN is not configured', async () => {
     const envWithoutToken = { SLACK_BOT_TOKEN: '' } as unknown as Env;
-    await expect(syncAll(envWithoutToken, db)).rejects.toThrow(
+    await expect(syncAll(envWithoutToken, db, createLogger())).rejects.toThrow(
       'SLACK_BOT_TOKEN is not configured',
     );
   });

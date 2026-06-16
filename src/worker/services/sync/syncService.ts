@@ -1,6 +1,7 @@
 import { and, eq, isNotNull, sql } from 'drizzle-orm';
 import type { Db } from '../../db/client';
 import { channels, messages, slackUsers, threads } from '../../db/schema';
+import type { Logger } from '../../lib/logger';
 import { type SlackClient, createSlackClient } from '../slack/client';
 
 function generateId(): string {
@@ -170,17 +171,23 @@ export async function syncExistingThreadsForChannel(
 export async function syncAll(
   env: Env,
   db: Db,
+  logger: Logger,
 ): Promise<{ channelCount: number; messageCount: number }> {
   if (!env.SLACK_BOT_TOKEN) {
     throw new Error('SLACK_BOT_TOKEN is not configured');
   }
   const client = createSlackClient(env.SLACK_BOT_TOKEN);
+  const log = logger.child({ service: 'syncAll' });
+
+  log.info('sync started');
 
   // 1. Sync channels
   await syncChannels(db, client);
+  log.info('channels synced');
 
   // 2. Sync users
   await syncUsers(db, client);
+  log.info('users synced');
 
   // 3. Sync messages + threads per channel
   const allChannels = await db.select().from(channels).all();
@@ -205,7 +212,10 @@ export async function syncAll(
 
     // Sync replies for existing thread parents (diff by replies_last_synced_at)
     await syncExistingThreadsForChannel(db, client, ch);
+
+    log.info('channel synced', { channel: ch.name, newThreadParents: newParentTsList.length });
   }
 
+  log.info('sync completed', { channelCount: allChannels.length, messageCount });
   return { channelCount: allChannels.length, messageCount };
 }
