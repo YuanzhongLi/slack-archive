@@ -9,13 +9,20 @@ export const ROOT_EMAIL = 'root@test.dev';
 export const ADMIN_EMAIL = 'admin@test.dev';
 export const VIEWER_EMAIL = 'viewer@test.dev';
 
+const MIGRATION_FILES = [
+  '0000_pale_hellcat.sql',
+  '0001_whole_gateway.sql',
+  '0002_cuddly_swarm.sql',
+];
+
 export function createTestDb(): Db {
   const sqlite = new Database(':memory:');
-  const sql = readFileSync(join(process.cwd(), 'migrations/0000_pale_hellcat.sql'), 'utf8');
-  // drizzle-kit generates statements separated by `--> statement-breakpoint`
-  for (const stmt of sql.split('--> statement-breakpoint')) {
-    const trimmed = stmt.trim();
-    if (trimmed) sqlite.exec(trimmed);
+  for (const file of MIGRATION_FILES) {
+    const sql = readFileSync(join(process.cwd(), 'migrations', file), 'utf8');
+    for (const stmt of sql.split('--> statement-breakpoint')) {
+      const trimmed = stmt.trim();
+      if (trimmed) sqlite.exec(trimmed);
+    }
   }
   return drizzle(sqlite, { schema }) as unknown as Db;
 }
@@ -48,7 +55,9 @@ export function seedUsers(db: Db) {
     .run();
 }
 
-export function makeMockEnv(overrides: Partial<Env> = {}): Env {
+type LooseEnv = Omit<Env, 'DEV_USER_EMAIL'> & { DEV_USER_EMAIL: string };
+
+export function makeMockEnv(overrides: Partial<LooseEnv> = {}): Env {
   return {
     DB: {} as D1Database,
     ASSETS: {} as Fetcher,

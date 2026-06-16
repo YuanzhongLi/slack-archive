@@ -9,8 +9,8 @@
 | スコープ | 用途 |
 |---------|------|
 | `channels:read` | パブリックチャンネル一覧取得 |
-| `channels:history` | パブリックチャンネルのメッセージ取得 |
-| `conversations:replies` | スレッド（replies）取得 |
+| `channels:history` | パブリックチャンネルのメッセージ取得 + スレッド（replies）取得 |
+| `channels:join` | メッセージ取得前にBotを自動でチャンネル参加させる（`conversations.history` に必要） |
 | `users:read` | ユーザー情報取得 |
 
 ## レート制限対応

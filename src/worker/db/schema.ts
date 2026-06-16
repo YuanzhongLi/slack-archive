@@ -1,4 +1,4 @@
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
@@ -44,9 +44,11 @@ export const messages = sqliteTable(
     text: text('text').notNull().default(''),
     threadTs: text('thread_ts'),
     createdAt: text('created_at').notNull(),
+    // populated only for thread parent messages (thread_ts === slack_ts)
+    repliesLastSyncedAt: text('replies_last_synced_at'),
   },
   (t) => [
-    index('idx_messages_channel_ts').on(t.channelId, t.slackTs),
+    uniqueIndex('uniq_messages_channel_ts').on(t.channelId, t.slackTs),
     index('idx_messages_thread_ts').on(t.threadTs),
   ],
 );
@@ -64,7 +66,10 @@ export const threads = sqliteTable(
     slackTs: text('slack_ts').notNull(),
     createdAt: text('created_at').notNull(),
   },
-  (t) => [index('idx_threads_parent_ts').on(t.channelId, t.parentTs)],
+  (t) => [
+    uniqueIndex('uniq_threads_channel_ts').on(t.channelId, t.slackTs),
+    index('idx_threads_parent_ts').on(t.channelId, t.parentTs),
+  ],
 );
 
 export type User = typeof users.$inferSelect;

@@ -20,11 +20,11 @@
 ## Phase 2: Slack同期基盤
 - ゴール: Slack APIからデータ取得・保存が動く
 - タスク:
-  - [ ] Slack APIクライアント実装（レート制限対応）
-  - [ ] チャンネル・メッセージ・スレッド・ユーザー同期ロジック
-  - [ ] 差分同期（last_synced_at以降のみ取得）
-  - [ ] Cron Triggersによる自動同期
-  - [ ] 手動同期APIエンドポイント
+  - [x] Slack APIクライアント実装（レート制限対応）
+  - [x] チャンネル・メッセージ・スレッド・ユーザー同期ロジック
+  - [x] 差分同期（last_synced_at以降のみ取得）
+  - [x] Cron Triggersによる自動同期
+  - [x] 手動同期APIエンドポイント
 
 ## Phase 3: UI実装
 - ゴール: Slackライクな閲覧UIが動く
@@ -45,3 +45,5 @@
 - ファイル添付アーカイブ（R2連携）
 - リアクション（絵文字）アーカイブ
 - DM・プライベートチャンネル対応
+- 編集・削除メッセージの同期（Events API `message_changed` / `message_deleted`）: [issue #2](https://github.com/YuanzhongLi/slack-archive/issues/2)
+- スレッド返信の差分同期（`conversations.replies` の `oldest` 活用 + `threads.last_synced_at`）: [issue #3](https://github.com/YuanzhongLi/slack-archive/issues/3)

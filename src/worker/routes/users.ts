@@ -1,3 +1,4 @@
+import { zValidator } from '@hono/zod-validator';
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -51,46 +52,48 @@ router.delete('/:id', async (c) => {
 });
 
 // POST /api/users/transfer-root
-router.post('/transfer-root', async (c) => {
-  const currentUser = c.get('user');
-  if (currentUser.role !== 'root') {
-    return c.json({ status: 'error', message: 'Only root can transfer root role' }, 403);
-  }
+router.post(
+  '/transfer-root',
+  zValidator('json', transferRootSchema, (result, c) => {
+    if (!result.success) {
+      return c.json(
+        { status: 'error', message: result.error.issues.map((i) => i.message).join(', ') },
+        400,
+      );
+    }
+  }),
+  async (c) => {
+    const currentUser = c.get('user');
+    if (currentUser.role !== 'root') {
+      return c.json({ status: 'error', message: 'Only root can transfer root role' }, 403);
+    }
 
-  const rawBody = await c.req.json<unknown>();
-  const parsed = transferRootSchema.safeParse(rawBody);
-  if (!parsed.success) {
-    return c.json(
-      { status: 'error', message: parsed.error.issues.map((i) => i.message).join(', ') },
-      400,
-    );
-  }
+    const { newRootId } = c.req.valid('json');
+    const db = createDb(c.env.DB);
+    const target = await db.select().from(users).where(eq(users.id, newRootId)).get();
 
-  const { newRootId } = parsed.data;
-  const db = createDb(c.env.DB);
-  const target = await db.select().from(users).where(eq(users.id, newRootId)).get();
+    if (!target) {
+      return c.json({ status: 'error', message: 'Target user not found' }, 404);
+    }
+    if (target.role === 'root') {
+      return c.json({ status: 'error', message: 'Target user is already root' }, 400);
+    }
 
-  if (!target) {
-    return c.json({ status: 'error', message: 'Target user not found' }, 404);
-  }
-  if (target.role === 'root') {
-    return c.json({ status: 'error', message: 'Target user is already root' }, 400);
-  }
+    const now = new Date().toISOString();
+    const d1 = c.env.DB;
+    await d1.batch([
+      // Demote current root by ID (not by role) to avoid unintended side effects
+      // if DB somehow has multiple root users
+      d1
+        .prepare('UPDATE users SET role = ?, updated_at = ? WHERE id = ? AND role = ?')
+        .bind('admin', now, currentUser.id, 'root'),
+      d1
+        .prepare('UPDATE users SET role = ?, updated_at = ? WHERE id = ?')
+        .bind('root', now, newRootId),
+    ]);
 
-  const now = new Date().toISOString();
-  const d1 = c.env.DB;
-  await d1.batch([
-    // Demote current root by ID (not by role) to avoid unintended side effects
-    // if DB somehow has multiple root users
-    d1
-      .prepare('UPDATE users SET role = ?, updated_at = ? WHERE id = ? AND role = ?')
-      .bind('admin', now, currentUser.id, 'root'),
-    d1
-      .prepare('UPDATE users SET role = ?, updated_at = ? WHERE id = ?')
-      .bind('root', now, newRootId),
-  ]);
-
-  return c.json({ status: 'done' });
-});
+    return c.json({ status: 'done' });
+  },
+);
 
 export default router;

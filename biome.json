@@ -47,5 +47,17 @@
   },
   "files": {
     "includes": ["src/**", "*.ts", "*.json", "!worker-configuration.d.ts"]
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/worker.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          }
+        }
+      }
+    }
+  ]
 }
