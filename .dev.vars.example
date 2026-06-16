@@ -1,0 +1,13 @@
+# Copy this file to .dev.vars for local development
+# NEVER commit .dev.vars
+
+# Local dev auth bypass: set to an email that exists in the users table
+# Ignored when CF_ACCESS_TEAM_DOMAIN is set (production safety)
+DEV_USER_EMAIL=you@example.com
+
+# CF Access (required in production, leave empty for local dev bypass)
+CF_ACCESS_TEAM_DOMAIN=
+CF_ACCESS_AUD=
+
+# Slack Bot Token (xoxb-...)
+SLACK_BOT_TOKEN=xoxb-your-token-here
