@@ -42,7 +42,16 @@
   - [x] ユーザー管理UI（追加・削除）: [issue #9](https://github.com/YuanzhongLi/slack-archive/issues/9)
   - [x] i18n対応（日英切替）: [issue #10](https://github.com/YuanzhongLi/slack-archive/issues/10)
 
-## 将来（Phase 5以降）
+## Phase 5: 本番デプロイ
+- ゴール: Cloudflare Workers 本番環境への初回デプロイ
+- タスク:
+  - [ ] wrangler login + D1 データベース作成
+  - [ ] Cloudflare Access（Zero Trust）設定（Google IdP）
+  - [ ] Slack App セットアップ・Bot Token 登録
+  - [ ] 本番 D1 migration 適用・root ユーザー追加
+  - [ ] 本番デプロイ・動作確認
+
+## 将来（Phase 6以降）
 - ファイル添付アーカイブ（R2連携）
 - リアクション（絵文字）アーカイブ
 - DM・プライベートチャンネル対応

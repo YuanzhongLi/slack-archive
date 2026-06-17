@@ -69,12 +69,11 @@ Cloudflare Zero Trust ダッシュボード（`dash.cloudflare.com` → Zero Tru
 
 Zero Trust > Settings > Custom Pages に表示される `<team>.cloudflareaccess.com` の `<team>` 部分を記録する。
 
-`wrangler.toml` の `[vars]` に追加:
+シークレットとして登録する:
 
-```toml
-[vars]
-DEV_USER_EMAIL = ""
-CF_ACCESS_TEAM_DOMAIN = "your-team.cloudflareaccess.com"
+```bash
+npx wrangler secret put CF_ACCESS_TEAM_DOMAIN
+# your-team.cloudflareaccess.com を入力して Enter
 ```
 
 ### 2-2. Access Application 作成
@@ -114,7 +113,7 @@ npx wrangler secret put CF_ACCESS_AUD
 
 ### 2-4. Google IdP の設定
 
-Zero Trust > Settings > Authentication > Add login methods > **Google**
+Zero Trust > Integrations > Identity Providers > Add new > **Google**
 
 Google Cloud Console で OAuth クライアントを作成:
 
@@ -167,7 +166,7 @@ npx wrangler deploy
 [ ] D1 migration を --remote で適用済み
 [ ] root ユーザーを D1 に追加済み
 [ ] CF Access Application 作成済み（Everyone policy）
-[ ] wrangler.toml の CF_ACCESS_TEAM_DOMAIN を更新済み
+[ ] wrangler secret put CF_ACCESS_TEAM_DOMAIN 実行済み
 [ ] wrangler secret put CF_ACCESS_AUD 実行済み
 [ ] CF Access に Google IdP を設定済み
 [ ] Slack App を作成し Bot Token スコープを設定済み

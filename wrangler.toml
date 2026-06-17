@@ -2,6 +2,8 @@ name = "slack-archive"
 main = "src/worker.ts"
 compatibility_date = "2025-12-01"
 compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+preview_urls = false
 
 [observability]
 enabled = true
@@ -20,7 +22,7 @@ DEV_USER_EMAIL = ""
 [[d1_databases]]
 binding = "DB"
 database_name = "slack-archive-db"
-database_id = "placeholder-replace-after-wrangler-d1-create"
+database_id = "31ee33df-b617-4d03-9598-923b8382fa69"
 migrations_dir = "migrations"
 
 [triggers]
