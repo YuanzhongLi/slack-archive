@@ -134,6 +134,145 @@ describe('DELETE /api/users/:id', () => {
 });
 
 // ---------------------------------------------------------------------------
+// POST /api/users
+// ---------------------------------------------------------------------------
+
+describe('POST /api/users', () => {
+  it('admin can create a viewer', async () => {
+    const res = await req(
+      'POST',
+      '/api/users',
+      { email: 'new@test.dev', role: 'viewer' },
+      makeMockEnv({ DEV_USER_EMAIL: ADMIN_EMAIL }),
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { email: string; role: string };
+    expect(body.email).toBe('new@test.dev');
+    expect(body.role).toBe('viewer');
+  });
+
+  it('admin can create an admin', async () => {
+    const res = await req(
+      'POST',
+      '/api/users',
+      { email: 'new-admin@test.dev', role: 'admin' },
+      makeMockEnv({ DEV_USER_EMAIL: ADMIN_EMAIL }),
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it('viewer cannot create users', async () => {
+    const res = await req(
+      'POST',
+      '/api/users',
+      { email: 'new@test.dev', role: 'viewer' },
+      makeMockEnv({ DEV_USER_EMAIL: VIEWER_EMAIL }),
+    );
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 409 on duplicate email', async () => {
+    const res = await req(
+      'POST',
+      '/api/users',
+      { email: VIEWER_EMAIL, role: 'viewer' },
+      makeMockEnv({ DEV_USER_EMAIL: ADMIN_EMAIL }),
+    );
+    expect(res.status).toBe(409);
+  });
+
+  it('returns 400 on invalid email', async () => {
+    const res = await req(
+      'POST',
+      '/api/users',
+      { email: 'not-an-email', role: 'viewer' },
+      makeMockEnv({ DEV_USER_EMAIL: ADMIN_EMAIL }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when role is root', async () => {
+    const res = await req(
+      'POST',
+      '/api/users',
+      { email: 'new@test.dev', role: 'root' },
+      makeMockEnv({ DEV_USER_EMAIL: ADMIN_EMAIL }),
+    );
+    expect(res.status).toBe(400);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// PATCH /api/users/:id
+// ---------------------------------------------------------------------------
+
+describe('PATCH /api/users/:id', () => {
+  it('admin can change viewer role to admin', async () => {
+    const res = await req(
+      'PATCH',
+      '/api/users/viewer-id',
+      { role: 'admin' },
+      makeMockEnv({ DEV_USER_EMAIL: ADMIN_EMAIL }),
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { role: string };
+    expect(body.role).toBe('admin');
+  });
+
+  it('admin can change admin role to viewer', async () => {
+    const res = await req(
+      'PATCH',
+      '/api/users/admin-id',
+      { role: 'viewer' },
+      makeMockEnv({ DEV_USER_EMAIL: ROOT_EMAIL }),
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { role: string };
+    expect(body.role).toBe('viewer');
+  });
+
+  it('cannot change role of root user', async () => {
+    const res = await req(
+      'PATCH',
+      '/api/users/root-id',
+      { role: 'admin' },
+      makeMockEnv({ DEV_USER_EMAIL: ADMIN_EMAIL }),
+    );
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 404 for non-existent user', async () => {
+    const res = await req(
+      'PATCH',
+      '/api/users/does-not-exist',
+      { role: 'viewer' },
+      makeMockEnv({ DEV_USER_EMAIL: ADMIN_EMAIL }),
+    );
+    expect(res.status).toBe(404);
+  });
+
+  it('viewer cannot change roles', async () => {
+    const res = await req(
+      'PATCH',
+      '/api/users/admin-id',
+      { role: 'viewer' },
+      makeMockEnv({ DEV_USER_EMAIL: VIEWER_EMAIL }),
+    );
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 400 when role is root', async () => {
+    const res = await req(
+      'PATCH',
+      '/api/users/viewer-id',
+      { role: 'root' },
+      makeMockEnv({ DEV_USER_EMAIL: ADMIN_EMAIL }),
+    );
+    expect(res.status).toBe(400);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // POST /api/users/transfer-root
 // ---------------------------------------------------------------------------
 
