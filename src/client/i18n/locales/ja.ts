@@ -1,0 +1,60 @@
+const ja = {
+  common: {
+    loading: '読み込み中…',
+    back: '← 戻る',
+  },
+  app: {
+    appName: 'Slack Archive',
+    channels: 'チャンネル',
+    management: '管理',
+    selectChannel: 'チャンネルを選択してください。',
+    accessDenied: 'アクセスが拒否されました。管理者にお問い合わせください。',
+  },
+  channelList: {
+    loading: 'チャンネルを読み込み中...',
+    error: 'チャンネルの読み込みに失敗しました',
+  },
+  messageList: {
+    loading: '読み込み中...',
+    error: 'メッセージの読み込みに失敗しました。',
+    empty: 'メッセージはまだありません。',
+  },
+  messageItem: {
+    reply_one: '{{count}} 件の返信',
+    reply_other: '{{count}} 件の返信',
+  },
+  threadPanel: {
+    title: 'スレッド',
+    closeLabel: 'スレッドを閉じる',
+    loading: '読み込み中...',
+    error: '返信の読み込みに失敗しました。',
+    empty: '返信はまだありません。',
+  },
+  management: {
+    title: '管理',
+    manualSync: '手動同期',
+    syncing: '同期中…',
+    runSyncNow: '今すぐ同期',
+    cronSchedule: 'Cron スケジュール',
+    cronDescription: '毎日 17:00 UTC',
+    cronNote: '90〜87日前のメッセージを完全再同期して、編集・削除を反映します。',
+    syncHistory: '同期履歴',
+    historyLoading: '読み込み中…',
+    historyError: '同期履歴の読み込みに失敗しました',
+    historyEmpty: '同期履歴はまだありません。',
+    colStartedAt: '開始日時',
+    colTrigger: 'トリガー',
+    colUser: 'ユーザー',
+    colStatus: 'ステータス',
+    colChannels: 'チャンネル',
+    colMessages: 'メッセージ',
+    colError: 'エラー',
+    statusSuccess: '成功',
+    statusError: 'エラー',
+    syncDone: '完了 — {{channelCount}} チャンネル、{{messageCount}} メッセージ',
+    syncError: 'エラー: {{message}}',
+    syncErrorGeneric: 'エラー: リクエストに失敗しました',
+  },
+} as const;
+
+export default ja;

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useMessages } from '../hooks/useMessages';
 import MessageItem from './MessageItem';
 
@@ -7,12 +8,13 @@ type MessageListProps = {
 };
 
 export default function MessageList({ channelId, onThreadOpen }: MessageListProps) {
+  const { t } = useTranslation();
   const { messages, isLoading, error } = useMessages(channelId);
 
   if (isLoading) {
     return (
       <div className="flex flex-1 items-center justify-center text-gray-400 text-sm">
-        Loading...
+        {t('messageList.loading')}
       </div>
     );
   }
@@ -20,7 +22,7 @@ export default function MessageList({ channelId, onThreadOpen }: MessageListProp
   if (error) {
     return (
       <div className="flex flex-1 items-center justify-center text-red-400 text-sm">
-        Failed to load messages.
+        {t('messageList.error')}
       </div>
     );
   }
@@ -28,7 +30,7 @@ export default function MessageList({ channelId, onThreadOpen }: MessageListProp
   if (messages.length === 0) {
     return (
       <div className="flex flex-1 items-center justify-center text-gray-500 text-sm">
-        No messages yet.
+        {t('messageList.empty')}
       </div>
     );
   }

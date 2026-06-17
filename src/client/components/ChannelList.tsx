@@ -1,4 +1,5 @@
 import { clsx } from 'clsx';
+import { useTranslation } from 'react-i18next';
 import { useChannels } from '../hooks/useChannels';
 
 type ChannelListProps = {
@@ -7,14 +8,15 @@ type ChannelListProps = {
 };
 
 export default function ChannelList({ selectedChannelId, onSelect }: ChannelListProps) {
+  const { t } = useTranslation();
   const { channels, isLoading, error } = useChannels();
 
   if (isLoading) {
-    return <p className="px-2 py-1 text-sm text-gray-400">Loading channels...</p>;
+    return <p className="px-2 py-1 text-sm text-gray-400">{t('channelList.loading')}</p>;
   }
 
   if (error) {
-    return <p className="px-2 py-1 text-sm text-red-400">Failed to load channels</p>;
+    return <p className="px-2 py-1 text-sm text-red-400">{t('channelList.error')}</p>;
   }
 
   return (

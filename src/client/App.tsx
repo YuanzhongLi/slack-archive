@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import ChannelList from './components/ChannelList';
 import MessageList from './components/MessageList';
@@ -23,6 +24,7 @@ function ChannelView({ onThreadOpen }: { onThreadOpen: (channelId: string, ts: s
 }
 
 function App() {
+  const { t, i18n } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [thread, setThread] = useState<ThreadState | null>(null);
@@ -30,6 +32,11 @@ function App() {
   const location = useLocation();
   const channelMatch = location.pathname.match(/^\/channels\/([^/]+)/);
   const selectedChannelId = channelMatch ? channelMatch[1] : undefined;
+
+  const changeLanguage = (lang: 'en' | 'ja') => {
+    i18n.changeLanguage(lang);
+    localStorage.setItem('i18nextLng', lang);
+  };
 
   // Auth check on mount — acceptable useEffect (external system sync, not SWR-replaceable data fetching)
   useEffect(() => {
@@ -46,7 +53,7 @@ function App() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
-        Loading…
+        {t('common.loading')}
       </div>
     );
   }
@@ -54,7 +61,7 @@ function App() {
   if (!user) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
-        <p>Access denied. Please contact your administrator.</p>
+        <p>{t('app.accessDenied')}</p>
       </div>
     );
   }
@@ -63,11 +70,30 @@ function App() {
     <div className="flex h-screen bg-gray-900 text-white overflow-hidden">
       <aside className="w-64 bg-gray-800 flex flex-col flex-shrink-0">
         <div className="p-4 border-b border-gray-700">
-          <h1 className="font-bold text-lg">Slack Archive</h1>
+          <h1 className="font-bold text-lg">{t('app.appName')}</h1>
           <p className="text-xs text-gray-400 mt-1">{user.email}</p>
+          <div className="flex gap-1 text-xs mt-1">
+            <button
+              type="button"
+              onClick={() => changeLanguage('en')}
+              className={i18n.language === 'en' ? 'text-white' : 'text-gray-500'}
+            >
+              EN
+            </button>
+            <span className="text-gray-500">/</span>
+            <button
+              type="button"
+              onClick={() => changeLanguage('ja')}
+              className={i18n.language === 'ja' ? 'text-white' : 'text-gray-500'}
+            >
+              JA
+            </button>
+          </div>
         </div>
         <nav className="flex-1 overflow-y-auto p-2">
-          <p className="text-xs text-gray-500 px-2 py-1 uppercase tracking-wider">Channels</p>
+          <p className="text-xs text-gray-500 px-2 py-1 uppercase tracking-wider">
+            {t('app.channels')}
+          </p>
           <ChannelList
             selectedChannelId={selectedChannelId}
             onSelect={(id) => {
@@ -83,7 +109,7 @@ function App() {
               onClick={() => navigate('/management/sync')}
               className="text-sm text-gray-400 hover:text-white"
             >
-              Management
+              {t('app.management')}
             </button>
           </div>
         )}
@@ -105,7 +131,7 @@ function App() {
             path="*"
             element={
               <div className="flex flex-1 items-center justify-center text-gray-500">
-                Select a channel to view messages.
+                {t('app.selectChannel')}
               </div>
             }
           />
