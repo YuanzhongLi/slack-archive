@@ -3,10 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import ChannelList from './components/ChannelList';
 import MessageList from './components/MessageList';
+import SearchBar from './components/SearchBar';
+import SearchResultPanel from './components/SearchResultPanel';
+import ThreadPanel from './components/ThreadPanel';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import ManagementPage from './pages/ManagementPage';
 import UserManagementPage from './pages/UserManagementPage';
-import ThreadPanel from './components/ThreadPanel';
 
 type User = {
   id: string;
@@ -30,6 +32,7 @@ function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [thread, setThread] = useState<ThreadState | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const langMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -139,6 +142,15 @@ function App() {
             )}
           </div>
         </div>
+        <div className="px-2 pt-2 pb-1">
+          <SearchBar
+            value={searchQuery}
+            onChange={(v) => {
+              setSearchQuery(v);
+              if (v) setThread(null);
+            }}
+          />
+        </div>
         <nav className="flex-1 overflow-y-auto p-2">
           <p className="text-xs text-gray-500 px-2 py-1 uppercase tracking-wider">
             {t('app.channels')}
@@ -188,7 +200,19 @@ function App() {
         </Routes>
       </main>
 
-      {thread && (
+      {searchQuery.trim() && (
+        <SearchResultPanel
+          query={searchQuery}
+          onClose={() => setSearchQuery('')}
+          onSelectChannel={(channelId) => {
+            setSearchQuery('');
+            setThread(null);
+            navigate(`/channels/${channelId}`);
+          }}
+        />
+      )}
+
+      {!searchQuery.trim() && thread && (
         <ThreadPanel
           channelId={thread.channelId}
           threadTs={thread.threadTs}

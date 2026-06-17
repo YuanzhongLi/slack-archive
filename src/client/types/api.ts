@@ -47,6 +47,23 @@ export type SyncLogsResponse = {
   logs: SyncLog[];
 };
 
+export type SearchResult = {
+  id: string;
+  slackTs: string;
+  text: string;
+  threadTs: string | null;
+  channel: {
+    id: string;
+    name: string;
+  };
+  user: SlackUser;
+};
+
+export type SearchResponse = {
+  results: SearchResult[];
+  hasMore: boolean;
+};
+
 export type AppUser = {
   id: string;
   email: string;
