@@ -63,6 +63,15 @@ const en = {
     syncError: 'Error: {{message}}',
     syncErrorGeneric: 'Error: Request failed',
   },
+  search: {
+    placeholder: 'Search messages…',
+    loading: 'Searching…',
+    empty: 'No messages found.',
+    error: 'Search failed.',
+    title: 'Search Results',
+    closeLabel: 'Close search',
+    channelLabel: '# {{name}}',
+  },
   userManagement: {
     title: 'User Management',
     email: 'Email',

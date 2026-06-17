@@ -62,6 +62,15 @@ const ja = {
     syncError: 'エラー: {{message}}',
     syncErrorGeneric: 'エラー: リクエストに失敗しました',
   },
+  search: {
+    placeholder: 'メッセージを検索…',
+    loading: '検索中…',
+    empty: 'メッセージが見つかりませんでした。',
+    error: '検索に失敗しました。',
+    title: '検索結果',
+    closeLabel: '検索を閉じる',
+    channelLabel: '# {{name}}',
+  },
   userManagement: {
     title: 'ユーザー管理',
     email: 'メールアドレス',
