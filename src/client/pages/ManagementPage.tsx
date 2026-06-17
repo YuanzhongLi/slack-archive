@@ -88,7 +88,7 @@ export default function ManagementPage() {
       <header className="p-4 border-b border-gray-700 flex items-center gap-4">
         <button
           type="button"
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/management')}
           className="text-gray-400 hover:text-white text-sm"
         >
           {t('common.back')}

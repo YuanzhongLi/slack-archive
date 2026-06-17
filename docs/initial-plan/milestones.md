@@ -39,7 +39,7 @@
 - タスク:
   - [ ] メッセージ検索
   - [x] 同期ログ・履歴表示
-  - [ ] ユーザー管理UI（追加・削除）: [issue #9](https://github.com/YuanzhongLi/slack-archive/issues/9)
+  - [x] ユーザー管理UI（追加・削除）: [issue #9](https://github.com/YuanzhongLi/slack-archive/issues/9)
   - [x] i18n対応（日英切替）: [issue #10](https://github.com/YuanzhongLi/slack-archive/issues/10)
 
 ## 将来（Phase 5以降）

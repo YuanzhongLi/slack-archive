@@ -46,3 +46,11 @@ export type SyncLog = {
 export type SyncLogsResponse = {
   logs: SyncLog[];
 };
+
+export type AppUser = {
+  id: string;
+  email: string;
+  role: 'root' | 'admin' | 'viewer';
+  createdAt: string;
+  updatedAt: string;
+};

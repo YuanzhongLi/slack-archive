@@ -16,6 +16,7 @@ setup:
 init-setup-local:
 	npm install
 	$(MAKE) db-setup-local
+	$(MAKE) db-seed-local
 	npx wrangler types
 	@echo "Done. Run 'make dev' to start the development server."
 
@@ -105,6 +106,13 @@ db-setup-local:
 	fi
 	@echo "Local DB setup complete. Run 'make dev' to start."
 
+## ローカル D1 にテスト用シードデータを投入（admin/viewer ユーザー追加）
+db-seed-local:
+	@echo "Seeding local DB with test users..."
+	@CI=true npx wrangler d1 execute slack-archive-db --local \
+		--command "INSERT OR IGNORE INTO users (id, email, role, created_at, updated_at) VALUES (lower(hex(randomblob(16))), 'admin@example.com', 'admin', datetime('now'), datetime('now')); INSERT OR IGNORE INTO users (id, email, role, created_at, updated_at) VALUES (lower(hex(randomblob(16))), 'viewer@example.com', 'viewer', datetime('now'), datetime('now'));"
+	@echo "Seed complete."
+
 ## Drizzle マイグレーションファイル生成
 db-generate:
 	npx drizzle-kit generate
@@ -134,4 +142,4 @@ help:
 	@grep -B1 -E '^[a-zA-Z0-9_%.-]+:' $(MAKEFILE_LIST) | \
 		awk '/^## /{desc=substr($$0,4)} /^[a-zA-Z0-9_%.-]+:/ && !/^\.PHONY/{split($$0,a,":"); printf "  \033[36m%-25s\033[0m %s\n", a[1], desc; desc=""}'
 
-.PHONY: setup init-setup-local dev build preview format lint lint-fix typecheck test test-coverage check ci deploy db-migrate-local db-migrate-remote db-reset-local db-setup-local db-generate wrangler-types clean-screenshots help
+.PHONY: setup init-setup-local dev build preview format lint lint-fix typecheck test test-coverage check ci deploy db-migrate-local db-migrate-remote db-reset-local db-setup-local db-seed-local db-generate wrangler-types clean-screenshots help
