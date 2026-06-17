@@ -45,11 +45,11 @@
 ## Phase 5: 本番デプロイ
 - ゴール: Cloudflare Workers 本番環境への初回デプロイ
 - タスク:
-  - [ ] wrangler login + D1 データベース作成
-  - [ ] Cloudflare Access（Zero Trust）設定（Google IdP）
-  - [ ] Slack App セットアップ・Bot Token 登録
-  - [ ] 本番 D1 migration 適用・root ユーザー追加
-  - [ ] 本番デプロイ・動作確認
+  - [x] wrangler login + D1 データベース作成
+  - [x] Cloudflare Access（Zero Trust）設定（Google IdP）
+  - [x] Slack App セットアップ・Bot Token 登録
+  - [x] 本番 D1 migration 適用・root ユーザー追加
+  - [x] 本番デプロイ・動作確認
 
 ## 将来（Phase 6以降）
 - ファイル添付アーカイブ（R2連携）
