@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { Message } from '../types/api';
 import Avatar from './Avatar';
 import Timestamp from './Timestamp';
@@ -8,6 +9,7 @@ type MessageItemProps = {
 };
 
 export default function MessageItem({ message, onThreadOpen }: MessageItemProps) {
+  const { t } = useTranslation();
   return (
     <div className="flex gap-3 py-2 px-4 hover:bg-gray-800/50 group">
       <Avatar user={message.user} size="md" />
@@ -25,7 +27,7 @@ export default function MessageItem({ message, onThreadOpen }: MessageItemProps)
             onClick={() => onThreadOpen(message.slackTs)}
             className="mt-1 text-sm text-blue-400 hover:text-blue-300 hover:underline"
           >
-            {message.replyCount} {message.replyCount === 1 ? 'reply' : 'replies'}
+            {t('messageItem.reply', { count: message.replyCount })}
           </button>
         )}
       </div>
