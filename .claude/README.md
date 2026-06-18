@@ -30,6 +30,7 @@ Claude Code のプロジェクト設定ディレクトリ。
 | `db-migration.md` | Drizzle ORM + D1 マイグレーション管理 |
 | `lint.md` | Biome lint/format・TypeScript 型ルール |
 | `milestones.md` | マイルストーン管理・更新タイミング |
+| `testing.md` | テストファイル配置・tsconfig project references の注意点 |
 
 ## skills/
 
