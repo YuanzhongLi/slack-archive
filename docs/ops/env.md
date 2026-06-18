@@ -10,6 +10,7 @@
 | `SLACK_ALARM_WEBHOOK_URL` | アラーム通知用 Slack Incoming Webhook URL（省略可） | `wrangler secret put` | `https://hooks.slack.com/services/...` |
 | `DEV_USER_EMAIL` | ローカル開発用 認証バイパス | `wrangler.toml` vars（空文字）/ `.dev.vars` | **本番では必ず `""`** |
 | `D1_ALARM_SIZE_THRESHOLD_MB` | D1 サイズアラーム閾値（MB）。デフォルト 400 MB | `wrangler.toml` vars | `400` |
+| `D1_SIZE_REPORT_ENABLED` | `"true"` のとき毎 cron で DB サイズを Slack に通知（監視用） | `wrangler.toml` vars | `"true"` / `"false"` |
 
 ## vars vs secrets
 

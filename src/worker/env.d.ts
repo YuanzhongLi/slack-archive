@@ -4,6 +4,8 @@ interface Env {
   CF_ACCESS_TEAM_DOMAIN: string;
   CF_ACCESS_AUD: string;
   SLACK_BOT_TOKEN: string;
-  // Optional: Slack Incoming Webhook URL for alarm notifications
-  SLACK_ALARM_WEBHOOK_URL?: string;
+  // Optional: Slack Incoming Webhook URL for alarm notifications.
+  // Typed as required here because wrangler types reads .dev.vars (where it is set locally).
+  // In production this may be undefined if the secret is not configured — guarded at runtime.
+  SLACK_ALARM_WEBHOOK_URL: string;
 }
