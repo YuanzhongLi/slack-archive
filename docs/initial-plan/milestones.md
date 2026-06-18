@@ -25,6 +25,7 @@
   - [x] 差分同期（last_synced_at以降のみ取得）
   - [x] Cron Triggersによる自動同期
   - [x] 手動同期APIエンドポイント
+  - [x] スレッド返信の差分同期（`conversations.replies` の `oldest` 活用 + `threads.last_synced_at`）: [issue #3](https://github.com/YuanzhongLi/slack-archive/issues/3)
 
 ## Phase 3: UI実装
 - ゴール: Slackライクな閲覧UIが動く
@@ -53,10 +54,3 @@
   - [x] Slack Webhook アラーム通知（cron 失敗 / D1 サイズ超過）
   - [x] セキュリティヘッダー middleware（CSP / X-Frame-Options 等）
   - [x] コスト・制限ドキュメント整備（Free tier 上限・Spending Limits）
-
-## 将来（Phase 6以降）
-- ファイル添付アーカイブ（R2連携）
-- リアクション（絵文字）アーカイブ
-- DM・プライベートチャンネル対応
-- 編集・削除メッセージの同期（Events API `message_changed` / `message_deleted`）: [issue #2](https://github.com/YuanzhongLi/slack-archive/issues/2)
-- スレッド返信の差分同期（`conversations.replies` の `oldest` 活用 + `threads.last_synced_at`）: [issue #3](https://github.com/YuanzhongLi/slack-archive/issues/3)
