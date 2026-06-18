@@ -57,6 +57,18 @@ SELECT email, role FROM users;
 
 ---
 
+## Billing & Notifications
+
+課金・通知の設定（Spending Limits・メール通知）は `docs/ops/billing-notifications.md` を参照。
+
+---
+
+## D1 Time Travel（バックアップ）
+
+D1 のポイントインタイムリストアは `docs/ops/d1-backup.md` を参照。
+
+---
+
 ## Cron Triggers の確認
 
 Workers の Triggers タブで Cron Triggers に `0 17 * * *`（UTC）= JST 02:00 が設定されていることを確認。

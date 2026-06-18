@@ -63,14 +63,7 @@ Slack メッセージ 1 件あたりのレコードサイズは約 500–800 byt
 
 Paid プランに移行した場合、想定外の費用増加を防ぐために Spending Limits を設定する。
 
-1. [Cloudflare Dashboard](https://dash.cloudflare.com) にログイン
-2. 左メニュー → **Workers & Pages** → **Overview**
-3. **Manage** → **Billing** → **Spending Limits** を開く
-4. Workers Paid の月次上限を設定（目安: $5〜$10 / 月）
-
-> 上限に達すると Workers / D1 へのリクエストが停止し 503 が返る（データは消えない）。
-
-> Cloudflare ダッシュボードの UI は変更されることがある。見つからない場合は [公式ドキュメント](https://developers.cloudflare.com/workers/platform/pricing/#spending-limits) を参照。
+設定手順・推奨値は `docs/ops/billing-notifications.md` を参照。
 
 ## 現在の利用状況の確認
 
