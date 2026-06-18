@@ -18,6 +18,9 @@ run_worker_first = ["/api/*"]
 # DEV_USER_EMAIL must be explicitly empty in production to prevent auth bypass.
 [vars]
 DEV_USER_EMAIL = ""
+# Alarm threshold: send Slack alarm when D1 database size exceeds this value (MB).
+# D1 free tier limit is 500 MB per database. Default: 400 MB (80% of free tier limit).
+D1_ALARM_SIZE_THRESHOLD_MB = 400
 
 [[d1_databases]]
 binding = "DB"

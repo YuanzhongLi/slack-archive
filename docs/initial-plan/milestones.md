@@ -50,6 +50,9 @@
   - [x] Slack App セットアップ・Bot Token 登録
   - [x] 本番 D1 migration 適用・root ユーザー追加
   - [x] 本番デプロイ・動作確認
+  - [x] Slack Webhook アラーム通知（cron 失敗 / D1 サイズ超過）
+  - [x] セキュリティヘッダー middleware（CSP / X-Frame-Options 等）
+  - [x] コスト・制限ドキュメント整備（Free tier 上限・Spending Limits）
 
 ## 将来（Phase 6以降）
 - ファイル添付アーカイブ（R2連携）

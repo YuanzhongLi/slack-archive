@@ -7,7 +7,9 @@
 | `CF_ACCESS_TEAM_DOMAIN` | CF Access JWT の issuer / JWKS URL | `wrangler.toml` vars | `your-team.cloudflareaccess.com` |
 | `CF_ACCESS_AUD` | CF Access Audience Tag | `wrangler secret put` | 64文字 hex |
 | `SLACK_BOT_TOKEN` | Slack Bot API Token | `wrangler secret put` | `xoxb-...` |
+| `SLACK_ALARM_WEBHOOK_URL` | アラーム通知用 Slack Incoming Webhook URL（省略可） | `wrangler secret put` | `https://hooks.slack.com/services/...` |
 | `DEV_USER_EMAIL` | ローカル開発用 認証バイパス | `wrangler.toml` vars（空文字）/ `.dev.vars` | **本番では必ず `""`** |
+| `D1_ALARM_SIZE_THRESHOLD_MB` | D1 サイズアラーム閾値（MB）。デフォルト 400 MB | `wrangler.toml` vars | `400` |
 
 ## vars vs secrets
 
@@ -31,6 +33,9 @@ DEV_USER_EMAIL=you@example.com
 CF_ACCESS_TEAM_DOMAIN=
 CF_ACCESS_AUD=
 SLACK_BOT_TOKEN=xoxb-your-token-here
+
+# (Optional) Slack Incoming Webhook URL for alarm notifications (cron failure, D1 size)
+# SLACK_ALARM_WEBHOOK_URL=https://hooks.slack.com/services/xxx/yyy/zzz
 ```
 
 `DEV_USER_EMAIL` に設定したメールアドレスが `users` テーブルに存在すれば、CF Access JWT 検証をスキップして認証バイパスされる。

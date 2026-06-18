@@ -11,3 +11,6 @@ CF_ACCESS_AUD=
 
 # Slack Bot Token (xoxb-...)
 SLACK_BOT_TOKEN=xoxb-your-token-here
+
+# (Optional) Slack Incoming Webhook URL for alarm notifications (cron failure, D1 size)
+# SLACK_ALARM_WEBHOOK_URL=https://hooks.slack.com/services/xxx/yyy/zzz
