@@ -89,8 +89,8 @@ npx wrangler tail --search "sync failed"
 ### リクエスト/レスポンスログ（全リクエストに自動付与）
 
 ```json
-{ "level": "info", "msg": "request",  "requestId": "...", "method": "POST", "path": "/api/sync" }
-{ "level": "info", "msg": "response", "requestId": "...", "method": "POST", "path": "/api/sync", "status": 200, "durationMs": 142 }
+{ "level": "info", "msg": "POST /api/sync", "requestId": "..." }
+{ "level": "info", "msg": "POST /api/sync 200", "requestId": "...", "durationMs": 142 }
 ```
 
 ### sync 系フィールド
@@ -106,7 +106,7 @@ npx wrangler tail --search "sync failed"
 - エラー一覧: `level = "error"`
 - sync 処理のみ: `msg CONTAINS "sync"`
 - 遅いリクエスト: `durationMs > 3000`
-- 特定 path のみ: `path = "/api/sync"`
+- 特定 path のみ: `msg CONTAINS "/api/sync"`
 
 ## コスト（Workers Logs）
 

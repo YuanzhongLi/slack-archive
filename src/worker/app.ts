@@ -21,11 +21,11 @@ app.use('*', async (c, next) => {
   const path = c.req.path;
   const start = Date.now();
 
-  logger.info('request', { method, path });
+  logger.info(`${method} ${path}`);
   try {
     await next();
   } finally {
-    logger.info('response', { method, path, status: c.res.status, durationMs: Date.now() - start });
+    logger.info(`${method} ${path} ${c.res.status}`, { durationMs: Date.now() - start });
   }
 });
 
