@@ -3,12 +3,16 @@ import { authMiddleware } from './middleware/auth';
 import type { User } from './middleware/auth';
 import { createLogger } from './lib/logger';
 import type { Logger } from './lib/logger';
+import { securityHeaders } from './middleware/securityHeaders';
 import channelsRouter from './routes/channels';
 import searchRouter from './routes/search';
 import syncRouter from './routes/sync';
 import usersRouter from './routes/users';
 
 const app = new Hono<{ Bindings: Env; Variables: { user: User; logger: Logger } }>();
+
+// Security headers on all responses
+app.use('*', securityHeaders);
 
 // Attach a request-scoped logger and emit request/response logs
 app.use('*', async (c, next) => {
