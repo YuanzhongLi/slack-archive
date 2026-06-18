@@ -10,12 +10,23 @@ import usersRouter from './routes/users';
 
 const app = new Hono<{ Bindings: Env; Variables: { user: User; logger: Logger } }>();
 
-// Attach a request-scoped logger to every request
+// Attach a request-scoped logger and emit request/response logs
 app.use('*', async (c, next) => {
   const requestId = crypto.randomUUID();
   const pretty = Boolean(c.env.DEV_USER_EMAIL) && !c.env.CF_ACCESS_TEAM_DOMAIN;
-  c.set('logger', createLogger({ requestId }, { pretty }));
-  await next();
+  const logger = createLogger({ requestId }, { pretty });
+  c.set('logger', logger);
+
+  const method = c.req.method;
+  const path = c.req.path;
+  const start = Date.now();
+
+  logger.info('request', { method, path });
+  try {
+    await next();
+  } finally {
+    logger.info('response', { method, path, status: c.res.status, durationMs: Date.now() - start });
+  }
 });
 
 // Health check (unauthenticated)
