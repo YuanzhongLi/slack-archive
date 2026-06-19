@@ -54,3 +54,8 @@
   - [x] Slack Webhook アラーム通知（cron 失敗 / D1 サイズ超過）
   - [x] セキュリティヘッダー middleware（CSP / X-Frame-Options 等）
   - [x] コスト・制限ドキュメント整備（Free tier 上限・Spending Limits）
+
+## Phase 6: UX改善
+- ゴール: 実用性・使いやすさの向上
+- タスク:
+  - [x] モバイルレスポンシブ対応（サイドバードロワー・フルスクリーンパネル）

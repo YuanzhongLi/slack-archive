@@ -9,6 +9,9 @@ const ja = {
     management: '管理',
     selectChannel: 'チャンネルを選択してください。',
     accessDenied: 'アクセスが拒否されました。管理者にお問い合わせください。',
+    openSidebar: 'サイドバーを開く',
+    closeSidebar: 'サイドバーを閉じる',
+    backToHome: 'ホームに戻る',
   },
   channelList: {
     loading: 'チャンネルを読み込み中...',
@@ -18,6 +21,8 @@ const ja = {
     loading: '読み込み中...',
     error: 'メッセージの読み込みに失敗しました。',
     empty: 'メッセージはまだありません。',
+    today: '今日',
+    yesterday: '昨日',
   },
   messageItem: {
     reply_one: '{{count}} 件の返信',

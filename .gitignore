@@ -25,6 +25,10 @@ dist/
 .DS_Store
 Thumbs.db
 
+# Reference screenshots (design discussion only)
+*.PNG
+*.png
+
 # Editor
 .vscode/settings.json
 *.swp

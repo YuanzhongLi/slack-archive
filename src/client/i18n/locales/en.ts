@@ -9,6 +9,9 @@ const en = {
     management: 'Management',
     selectChannel: 'Select a channel to view messages.',
     accessDenied: 'Access denied. Please contact your administrator.',
+    openSidebar: 'Open sidebar',
+    closeSidebar: 'Close sidebar',
+    backToHome: 'Back to home',
   },
   channelList: {
     loading: 'Loading channels...',
@@ -18,6 +21,8 @@ const en = {
     loading: 'Loading...',
     error: 'Failed to load messages.',
     empty: 'No messages yet.',
+    today: 'Today',
+    yesterday: 'Yesterday',
   },
   messageItem: {
     reply_one: '{{count}} reply',
