@@ -27,6 +27,9 @@ const en = {
   messageItem: {
     reply_one: '{{count}} reply',
     reply_other: '{{count}} replies',
+    deleteMessage: 'Delete',
+    confirmDeleteMessage: 'Permanently delete this message? This cannot be undone.',
+    deleteError: 'Delete failed',
   },
   threadPanel: {
     title: 'Thread',
@@ -34,6 +37,9 @@ const en = {
     loading: 'Loading...',
     error: 'Failed to load replies.',
     empty: 'No replies yet.',
+    deleteReply: 'Delete',
+    confirmDeleteReply: 'Permanently delete this reply? This cannot be undone.',
+    deleteError: 'Delete failed',
   },
   adminDashboard: {
     title: 'Management',
@@ -41,6 +47,8 @@ const en = {
     syncDescription: 'Run manual sync, view sync history, and check cron schedule',
     userTitle: 'User Management',
     userDescription: 'Add, remove, and change roles of users',
+    channelTitle: 'Channel Management',
+    channelDescription: 'Delete channels and all their data to free up D1 storage',
   },
   management: {
     title: 'Management',
@@ -76,6 +84,19 @@ const en = {
     title: 'Search Results',
     closeLabel: 'Close search',
     channelLabel: '# {{name}}',
+  },
+  channelManagement: {
+    title: 'Channel Management',
+    loading: 'Loading…',
+    loadError: 'Failed to load channels',
+    channelCol: 'Channel',
+    actionsCol: 'Actions',
+    deleteChannel: 'Delete Channel',
+    confirmDeleteChannel:
+      'Permanently delete the channel #{{name}} and ALL its messages and threads? This cannot be undone.',
+    deleteSuccess: 'Channel deleted successfully',
+    deleteError: 'Delete failed',
+    empty: 'No channels found',
   },
   userManagement: {
     title: 'User Management',

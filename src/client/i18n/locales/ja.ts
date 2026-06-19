@@ -27,6 +27,9 @@ const ja = {
   messageItem: {
     reply_one: '{{count}} 件の返信',
     reply_other: '{{count}} 件の返信',
+    deleteMessage: '削除',
+    confirmDeleteMessage: 'このメッセージを完全に削除しますか？この操作は取り消せません。',
+    deleteError: '削除に失敗しました',
   },
   threadPanel: {
     title: 'スレッド',
@@ -34,6 +37,9 @@ const ja = {
     loading: '読み込み中...',
     error: '返信の読み込みに失敗しました。',
     empty: '返信はまだありません。',
+    deleteReply: '削除',
+    confirmDeleteReply: 'この返信を完全に削除しますか？この操作は取り消せません。',
+    deleteError: '削除に失敗しました',
   },
   adminDashboard: {
     title: '管理',
@@ -41,6 +47,8 @@ const ja = {
     syncDescription: '手動同期の実行・同期履歴の確認・Cron スケジュールの確認',
     userTitle: 'ユーザー管理',
     userDescription: 'ユーザーの追加・削除・ロール変更',
+    channelTitle: 'チャンネル管理',
+    channelDescription: 'チャンネルとそのデータを削除して D1 ストレージを解放',
   },
   management: {
     title: '管理',
@@ -75,6 +83,19 @@ const ja = {
     title: '検索結果',
     closeLabel: '検索を閉じる',
     channelLabel: '# {{name}}',
+  },
+  channelManagement: {
+    title: 'チャンネル管理',
+    loading: '読み込み中…',
+    loadError: 'チャンネルの読み込みに失敗しました',
+    channelCol: 'チャンネル',
+    actionsCol: '操作',
+    deleteChannel: 'チャンネルを削除',
+    confirmDeleteChannel:
+      'チャンネル #{{name}} とそのすべてのメッセージ・スレッドを完全削除しますか？この操作は取り消せません。',
+    deleteSuccess: 'チャンネルを削除しました',
+    deleteError: '削除に失敗しました',
+    empty: 'チャンネルがありません',
   },
   userManagement: {
     title: 'ユーザー管理',

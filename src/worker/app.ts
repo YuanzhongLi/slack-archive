@@ -4,6 +4,7 @@ import type { User } from './middleware/auth';
 import { createLogger } from './lib/logger';
 import type { Logger } from './lib/logger';
 import { securityHeaders } from './middleware/securityHeaders';
+import archiveRouter from './routes/archive';
 import channelsRouter from './routes/channels';
 import searchRouter from './routes/search';
 import syncRouter from './routes/sync';
@@ -56,5 +57,8 @@ app.route('/api/search', searchRouter);
 
 // Sync
 app.route('/api/sync', syncRouter);
+
+// Archive (data cleanup)
+app.route('/api/archive', archiveRouter);
 
 export { app };

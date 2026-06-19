@@ -2,6 +2,7 @@ import { and, asc, count, desc, eq, inArray, lt } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { createDb } from '../db/client';
 import { channels, messages, slackUsers, threads } from '../db/schema';
+import { cutoffIso } from '../lib/archive';
 import type { Logger } from '../lib/logger';
 import type { User } from '../middleware/auth';
 
@@ -37,6 +38,7 @@ router.get('/:id/messages', async (c) => {
 
   try {
     const db = createDb(c.env.DB);
+    const cutoff = cutoffIso();
 
     // Build where conditions
     const conditions = [eq(messages.channelId, channelId)];
@@ -51,6 +53,7 @@ router.get('/:id/messages', async (c) => {
         slackTs: messages.slackTs,
         text: messages.text,
         threadTs: messages.threadTs,
+        createdAt: messages.createdAt,
         userSlackId: messages.userSlackId,
         slackUserId: slackUsers.slackUserId,
         displayName: slackUsers.displayName,
@@ -91,6 +94,7 @@ router.get('/:id/messages', async (c) => {
       text: r.text,
       threadTs: r.threadTs,
       replyCount: replyCounts.get(r.slackTs) ?? 0,
+      isDeletable: r.createdAt < cutoff,
       user: {
         slackUserId: r.slackUserId ?? r.userSlackId ?? '',
         displayName: r.displayName ?? 'Unknown',
@@ -113,11 +117,14 @@ router.get('/:id/messages/:ts/threads', async (c) => {
   try {
     const db = createDb(c.env.DB);
 
+    const threadCutoff = cutoffIso();
+
     const rows = await db
       .select({
         id: threads.id,
         slackTs: threads.slackTs,
         text: threads.text,
+        createdAt: threads.createdAt,
         userSlackId: threads.userSlackId,
         slackUserId: slackUsers.slackUserId,
         displayName: slackUsers.displayName,
@@ -132,6 +139,7 @@ router.get('/:id/messages/:ts/threads', async (c) => {
       id: r.id,
       slackTs: r.slackTs,
       text: r.text,
+      isDeletable: r.createdAt < threadCutoff,
       user: {
         slackUserId: r.slackUserId ?? r.userSlackId ?? '',
         displayName: r.displayName ?? 'Unknown',

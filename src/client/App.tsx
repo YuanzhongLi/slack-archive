@@ -9,6 +9,7 @@ import SearchResultPanel from './components/SearchResultPanel';
 import ThreadPanel from './components/ThreadPanel';
 import { useChannels } from './hooks/useChannels';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import ChannelManagementPage from './pages/ChannelManagementPage';
 import ManagementPage from './pages/ManagementPage';
 import UserManagementPage from './pages/UserManagementPage';
 
@@ -23,10 +24,22 @@ type ThreadState = {
   threadTs: string;
 };
 
-function ChannelView({ onThreadOpen }: { onThreadOpen: (channelId: string, ts: string) => void }) {
+function ChannelView({
+  onThreadOpen,
+  canDelete,
+}: {
+  onThreadOpen: (channelId: string, ts: string) => void;
+  canDelete: boolean;
+}) {
   const { channelId } = useParams<{ channelId: string }>();
   if (!channelId) return null;
-  return <MessageList channelId={channelId} onThreadOpen={(ts) => onThreadOpen(channelId, ts)} />;
+  return (
+    <MessageList
+      channelId={channelId}
+      onThreadOpen={(ts) => onThreadOpen(channelId, ts)}
+      canDelete={canDelete}
+    />
+  );
 }
 
 function App() {
@@ -271,10 +284,15 @@ function App() {
               <Route path="/management/sync" element={<ManagementPage />} />
               <Route path="/management/user" element={<UserManagementPage currentUser={user} />} />
               <Route
+                path="/management/channel"
+                element={<ChannelManagementPage currentUser={user} />}
+              />
+              <Route
                 path="/channels/:channelId"
                 element={
                   <ChannelView
                     onThreadOpen={(cId, ts) => setThread({ channelId: cId, threadTs: ts })}
+                    canDelete={user.role === 'root' || user.role === 'admin'}
                   />
                 }
               />
@@ -344,6 +362,7 @@ function App() {
               channelId={thread.channelId}
               threadTs={thread.threadTs}
               onClose={() => setThread(null)}
+              canDelete={user.role === 'root' || user.role === 'admin'}
             />
           )}
         </main>
