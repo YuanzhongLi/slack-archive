@@ -19,7 +19,7 @@ export default function SearchResultPanel({
   const { data, isLoading, error } = useSearch(query);
 
   return (
-    <div className="w-80 border-l border-gray-700 bg-gray-800 flex flex-col flex-shrink-0">
+    <div className="md:w-80 md:border-l md:relative absolute inset-0 z-20 border-gray-700 bg-gray-800 flex flex-col flex-shrink-0">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
         <h2 className="font-semibold text-gray-100">{t('search.title')}</h2>
         <button
