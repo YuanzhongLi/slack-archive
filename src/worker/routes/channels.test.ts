@@ -1,11 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../db/client', () => ({ createDb: vi.fn() }));
+vi.mock('../lib/archive', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../lib/archive')>();
+  return { ...original, cutoffIso: vi.fn() };
+});
+
 import { createDb } from '../db/client';
+import { cutoffIso } from '../lib/archive';
 import { app } from '../app';
 import * as schema from '../db/schema';
 import { VIEWER_EMAIL, createTestDb, makeMockEnv, seedUsers } from '../test/helpers';
 import type { Db } from '../db/client';
+
+const cutoffIsoMock = vi.mocked(cutoffIso);
+const CUTOFF = '2023-01-01T00:00:00.000Z';
+const OLD_DATE = '2020-01-01T00:00:00.000Z';
+const NEW_DATE = new Date(Date.now() - 1000).toISOString();
 
 const createDbMock = vi.mocked(createDb);
 
@@ -15,6 +26,7 @@ beforeEach(() => {
   db = createTestDb();
   seedUsers(db);
   createDbMock.mockReturnValue(db);
+  cutoffIsoMock.mockReturnValue(CUTOFF);
 });
 
 function req(path: string, env?: Env): Promise<Response> {
@@ -40,17 +52,10 @@ function seedMessage(
   userSlackId: string,
   text: string,
   threadTs: string | null = null,
+  createdAt: string = new Date().toISOString(),
 ) {
   db.insert(schema.messages)
-    .values({
-      id,
-      channelId,
-      slackTs,
-      userSlackId,
-      text,
-      threadTs,
-      createdAt: new Date().toISOString(),
-    })
+    .values({ id, channelId, slackTs, userSlackId, text, threadTs, createdAt })
     .run();
 }
 
@@ -61,17 +66,10 @@ function seedThread(
   slackTs: string,
   userSlackId: string,
   text: string,
+  createdAt: string = new Date().toISOString(),
 ) {
   db.insert(schema.threads)
-    .values({
-      id,
-      channelId,
-      parentTs,
-      slackTs,
-      userSlackId,
-      text,
-      createdAt: new Date().toISOString(),
-    })
+    .values({ id, channelId, parentTs, slackTs, userSlackId, text, createdAt })
     .run();
 }
 
@@ -223,6 +221,22 @@ describe('GET /api/channels/:id/messages', () => {
     );
     expect(res.status).toBe(200);
   });
+
+  it('sets isDeletable=true for messages older than cutoff', async () => {
+    seedMessage('m-old', 'ch-1', '1000000001.000000', 'U001', 'old', null, OLD_DATE);
+
+    const res = await req('/api/channels/ch-1/messages');
+    const body = (await res.json()) as { messages: { isDeletable: boolean }[] };
+    expect(body.messages[0].isDeletable).toBe(true);
+  });
+
+  it('sets isDeletable=false for messages newer than cutoff', async () => {
+    seedMessage('m-new', 'ch-1', '1000000001.000000', 'U001', 'new', null, NEW_DATE);
+
+    const res = await req('/api/channels/ch-1/messages');
+    const body = (await res.json()) as { messages: { isDeletable: boolean }[] };
+    expect(body.messages[0].isDeletable).toBe(false);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -286,5 +300,37 @@ describe('GET /api/channels/:id/messages/:ts/threads', () => {
       makeMockEnv({ DEV_USER_EMAIL: VIEWER_EMAIL }),
     );
     expect(res.status).toBe(200);
+  });
+
+  it('sets isDeletable=true for thread replies older than cutoff', async () => {
+    seedThread(
+      't-1',
+      'ch-1',
+      '1000000001.000000',
+      '1000000002.000000',
+      'U001',
+      'old reply',
+      OLD_DATE,
+    );
+
+    const res = await req('/api/channels/ch-1/messages/1000000001.000000/threads');
+    const body = (await res.json()) as { isDeletable: boolean }[];
+    expect(body[0].isDeletable).toBe(true);
+  });
+
+  it('sets isDeletable=false for thread replies newer than cutoff', async () => {
+    seedThread(
+      't-1',
+      'ch-1',
+      '1000000001.000000',
+      '1000000002.000000',
+      'U001',
+      'new reply',
+      NEW_DATE,
+    );
+
+    const res = await req('/api/channels/ch-1/messages/1000000001.000000/threads');
+    const body = (await res.json()) as { isDeletable: boolean }[];
+    expect(body[0].isDeletable).toBe(false);
   });
 });

@@ -16,6 +16,7 @@ export type Message = {
   text: string;
   threadTs: string | null;
   replyCount: number;
+  isDeletable: boolean;
   user: SlackUser;
 };
 
@@ -28,6 +29,7 @@ export type ThreadReply = {
   id: string;
   slackTs: string;
   text: string;
+  isDeletable: boolean;
   user: SlackUser;
 };
 

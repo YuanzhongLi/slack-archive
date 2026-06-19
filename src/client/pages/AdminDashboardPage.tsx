@@ -48,6 +48,27 @@ function UsersIcon() {
   );
 }
 
+function TrashIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="w-5 h-5"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14H6L5 6" />
+      <path d="M10 11v6M14 11v6" />
+      <path d="M9 6V4h6v2" />
+    </svg>
+  );
+}
+
 type CardProps = {
   icon: React.ReactNode;
   title: string;
@@ -106,6 +127,14 @@ export default function AdminDashboardPage({ currentUser }: Props) {
               title={t('adminDashboard.userTitle')}
               description={t('adminDashboard.userDescription')}
               onClick={() => navigate('/management/user')}
+            />
+          )}
+          {(currentUser.role === 'root' || currentUser.role === 'admin') && (
+            <DashboardCard
+              icon={<TrashIcon />}
+              title={t('adminDashboard.channelTitle')}
+              description={t('adminDashboard.channelDescription')}
+              onClick={() => navigate('/management/channel')}
             />
           )}
         </div>

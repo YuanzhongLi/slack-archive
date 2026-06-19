@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMessages } from '../hooks/useMessages';
 import MessageItem from './MessageItem';
@@ -5,6 +6,7 @@ import MessageItem from './MessageItem';
 type MessageListProps = {
   channelId: string;
   onThreadOpen: (ts: string) => void;
+  canDelete?: boolean;
 };
 
 export function formatDateLabel(
@@ -34,9 +36,14 @@ export function isSameDay(a: Date, b: Date): boolean {
   );
 }
 
-export default function MessageList({ channelId, onThreadOpen }: MessageListProps) {
+export default function MessageList({
+  channelId,
+  onThreadOpen,
+  canDelete = false,
+}: MessageListProps) {
   const { t, i18n } = useTranslation();
   const { messages, isLoading, error } = useMessages(channelId);
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
   if (isLoading) {
     return (
@@ -62,14 +69,18 @@ export default function MessageList({ channelId, onThreadOpen }: MessageListProp
     );
   }
 
-  const orderedMessages = [...messages].reverse();
+  const visibleMessages = [...messages].reverse().filter((m) => !deletedIds.has(m.id));
   const today = new Date();
+
+  function handleDelete(id: string) {
+    setDeletedIds((prev) => new Set(prev).add(id));
+  }
 
   return (
     <div className="flex flex-col flex-1 overflow-y-auto">
-      {orderedMessages.map((message, index) => {
+      {visibleMessages.map((message, index) => {
         const msgDate = slackTsToDate(message.slackTs);
-        const prevDate = index > 0 ? slackTsToDate(orderedMessages[index - 1].slackTs) : null;
+        const prevDate = index > 0 ? slackTsToDate(visibleMessages[index - 1].slackTs) : null;
         const showSeparator = !prevDate || !isSameDay(prevDate, msgDate);
 
         return (
@@ -83,7 +94,12 @@ export default function MessageList({ channelId, onThreadOpen }: MessageListProp
                 <div className="flex-1 h-px bg-gray-700" />
               </div>
             )}
-            <MessageItem message={message} onThreadOpen={onThreadOpen} />
+            <MessageItem
+              message={message}
+              onThreadOpen={onThreadOpen}
+              canDelete={canDelete}
+              onDelete={handleDelete}
+            />
           </div>
         );
       })}
