@@ -25,9 +25,9 @@ dist/
 .DS_Store
 Thumbs.db
 
-# Reference screenshots (design discussion only)
-*.PNG
-*.png
+# Reference screenshots (design discussion only, root-level only)
+/*.PNG
+/*.png
 
 # Editor
 .vscode/settings.json
