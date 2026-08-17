@@ -14,6 +14,28 @@ Slack APIでメッセージ・チャンネル・ユーザー情報を定期的�
 
 詳細な設計は [`docs/initial-plan/`](./docs/initial-plan/) を、運用手順は [`docs/ops/`](./docs/ops/) を参照。
 
+## スクリーンショット
+
+### メッセージ閲覧
+
+| チャンネル一覧 | メッセージ・スレッド |
+|---|---|
+| ![channel list](./docs/image/slack-archive-default.png) | ![channel messages and thread](./docs/image/slack-archive-channel.png) |
+
+### 横断検索
+
+![cross-channel search](./docs/image/slack-archive-search.png)
+
+### 管理画面（/management）
+
+| メニュー | Slack 同期 |
+|---|---|
+| ![management menu](./docs/image/slack-archive-management-default.png) | ![sync history](./docs/image/slack-archive-management-sync.png) |
+
+| ユーザー管理 | チャンネル管理 |
+|---|---|
+| ![user management](./docs/image/slack-archive-management-user.png) | ![channel management](./docs/image/slack-archive-management-channel.png) |
+
 ## セットアップ
 
 ### 前提
