@@ -32,7 +32,7 @@
 ### Wave 2（Wave 1完了後）
 
 #### Step 3: CF Access認証 + 認可ミドルウェア
-- `src/worker/middleware/auth.ts`: air-volleyballの adminAuth.ts をベースにJWT検証実装
+- `src/worker/middleware/auth.ts`: 別プロジェクトの CF Access 認証実装をベースにJWT検証実装
   - JWKS in-memory cache
   - DEV_USER_EMAIL ローカルバイパス（CF_ACCESS_TEAM_DOMAIN未設定時のみ有効）
   - usersテーブルのemail照合
@@ -51,7 +51,7 @@
 - role設計: root > admin > viewer の3段階。rootは削除不可、transfer-rootでアトミックに譲渡
 - 認証: CF Access Everyone policy + usersテーブルemail照合の2段構え
 - DEV_USER_EMAIL: CF_ACCESS_TEAM_DOMAINが設定されている場合は強制無効（本番誤設定防止）
-- air-volleyballのadminAuth.tsのJWT検証ロジックをベースに流用
+- 別プロジェクトのJWT検証ロジックをベースに流用
 
 ## 完了条件
 - [ ] `pnpm install` が成功する

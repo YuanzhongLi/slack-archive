@@ -20,6 +20,10 @@ dist/
 .claude/settings.local.json
 .claude/tmp/*
 !.claude/tmp/.gitkeep
+.claude/worktrees/
+
+# MCP local config
+.mcp.json
 
 # OS
 .DS_Store

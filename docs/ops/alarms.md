@@ -57,15 +57,15 @@ D1_SIZE_REPORT_ENABLED = "true"   # "true" で有効 / "false" または削除�
 
 `SLACK_ALARM_WEBHOOK_URL` が未設定の場合、アラームは送信されず Workers Logs にのみ記録される。
 
-## セットアップ済みの設定（Air Volleyball Japan ワークスペース）
+## セットアップ例
 
 | 項目 | 値 |
 |------|---|
-| Slack App | slack-archive（ID: `A0BAMGUPMS7`）|
-| 通知チャンネル | `#dev-ops`（プライベートチャンネル）|
-| `SLACK_ALARM_WEBHOOK_URL` | 登録済み（`wrangler secret put` 済み）|
+| Slack App | 任意の名前（例: `slack-archive`）|
+| 通知チャンネル | 任意の通知用チャンネル（プライベートチャンネル推奨）|
+| `SLACK_ALARM_WEBHOOK_URL` | `wrangler secret put SLACK_ALARM_WEBHOOK_URL` で登録する |
 
-Webhook URL 自体はセキュリティのためここには記載しない。再確認・再登録が必要な場合は [Slack API: Your Apps](https://api.slack.com/apps/A0BAMGUPMS7) → Incoming Webhooks から確認する。
+Webhook URL 自体はセキュリティのためここには記載しない。再確認・再登録が必要な場合は [Slack API: Your Apps](https://api.slack.com/apps) → 対象アプリ → Incoming Webhooks から確認する。
 
 ## D1 サイズの取得方法
 
