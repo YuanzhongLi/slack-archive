@@ -13,11 +13,11 @@
 
 - [ ] Cloudflare Cron Triggers 無料枠の制約（実行回数・間隔の上限）
 - [ ] Drizzle ORM の D1 upsert パターン（大量メッセージの効率的なバルクupsert）
-- [ ] CF Access JWT検証ライブラリの最新対応状況（air-volleyballの実装を参照）
+- [ ] CF Access JWT検証ライブラリの最新対応状況（別プロジェクトの実装を参照）
 - [ ] Slack APIの`conversations.history`のページネーション上限（1回あたり最大1000件）
 
 ## 補足メモ
 
 - 1プロジェクト = 1ワークスペース運用。新しいワークスペースが必要な場合はリポジトリをcloneしてSecrets（`SLACK_BOT_TOKEN`等）を差し替える
 - CF Accessは"Everyone" policy（Googleアカウントで認証済みなら通過）。実際のアクセス制御はWorker側`users`テーブルで管理
-- air-volleyball の `.claude/` 設定（rules/skills/agents）を参考にして本プロジェクトの `.claude/` を整備する
+- 別プロジェクトの `.claude/` 設定（rules/skills/agents）を参考にして本プロジェクトの `.claude/` を整備する

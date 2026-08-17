@@ -90,11 +90,11 @@ cleanup() {
     done
 
     # Remove empty parent dirs left behind by branch-nested worktree paths
-    # (e.g. `test/multi-init-1` → parent `air-volleyball-test/` stays empty after removal).
+    # (e.g. `test/multi-init-1` → parent `myproject-test/` stays empty after removal).
     #
     # ⚠️ WARNING: USE `rmdir` ONLY — NEVER REPLACE WITH `rm -rf`.
-    # The intermediate parent dir (e.g. `air-volleyball-feature/`) is SHARED across
-    # all feature worktrees (`air-volleyball-feature/issue-30`, `.../issue-51`, etc.).
+    # The intermediate parent dir (e.g. `myproject-feature/`) is SHARED across
+    # all feature worktrees (`myproject-feature/issue-30`, `.../issue-51`, etc.).
     # During test runs it happens to contain only this test's own worktrees, but a
     # branch name collision with an active feature worktree is possible. `rmdir` is
     # safe because it fails atomically on non-empty directories — swapping to `rm -rf`

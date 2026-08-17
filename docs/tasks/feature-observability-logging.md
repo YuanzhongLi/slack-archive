@@ -8,7 +8,7 @@ HTTPリクエスト/レスポンスの method/path/status/duration を実際に�
 
 ## ソース
 
-ユーザー指示: cloudflare上でlogが見れるようにしたい（air-volleyball/logging.md を参考に）
+ユーザー指示: cloudflare上でlogが見れるようにしたい（他プロジェクトの ops ドキュメントを参考に）
 
 ## 実装計画
 
@@ -28,7 +28,7 @@ HTTPリクエスト/レスポンスの method/path/status/duration を実際に�
 
 - `wrangler.toml` の `[observability] enabled = true` + `nodejs_compat` は既設定済み
 - `console.log` の JSON 出力は Workers Logs に自動転送される
-- air-volleyball プロジェクトの logging.md を参考に同様の ops ドキュメントを作成
+- 他プロジェクトの logging ops ドキュメントを参考に同様の内容を作成
 
 ## 完了条件
 

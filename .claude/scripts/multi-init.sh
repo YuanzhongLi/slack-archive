@@ -103,7 +103,7 @@ create_worktree() {
     # Derive parent dir / project name from the MAIN worktree (not the current one).
     # `git worktree list --porcelain` always lists the main worktree first, so this
     # works whether multi-init is invoked from main or from another feature worktree.
-    # Prefixing the branch with the project name (e.g. "air-volleyball-feature/issue-62")
+    # Prefixing the branch with the project name (e.g. "myproject-feature/issue-62")
     # prevents collisions with other projects that use the same `feature/issue-xxx`
     # naming convention under the same parent directory.
     local main_repo_root
