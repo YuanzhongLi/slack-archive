@@ -60,7 +60,11 @@ PR #N "title" を squash merge します。承認しますか？
 ### 4.0. Cleanup 承認 gate
 
 ```
-cleanup chain（feature branch 削除 / remote ref 削除 / main pull / fetch --prune）を実行します。
+cleanup chain を実行します。
+- main working tree を main に切り替えて pull
+- worktree 運用の場合は feature worktree を削除（未コミットの変更も破棄）
+- feature branch の local / remote ref を削除
+- fetch --prune
 1. 実行
 2. 中断（手動 cleanup）
 ```
@@ -69,19 +73,36 @@ cleanup chain（feature branch 削除 / remote ref 削除 / main pull / fetch --
 
 ```bash
 current_path=$(git rev-parse --show-toplevel)
-main_path=$(git worktree list --porcelain \
-  | awk '/^worktree / {wt=$2} /^branch refs\/heads\/(main|master)$/ {print wt; exit}')
+current_path=${current_path:+$(cd "$current_path" 2>/dev/null && pwd -P)}
+# Prefer the worktree that has main checked out; otherwise fall back to the first entry, which is
+# always the main working tree (a clone with a single worktree on a feature branch resolves there).
+# `${var:+...}` keeps an empty value empty: in zsh `cd ""` succeeds and would return the cwd.
+main_path=$(git worktree list --porcelain | awk '
+  /^worktree / {wt = substr($0, 10); if (first == "") first = wt}
+  /^branch refs\/heads\/main$/ {m = wt}
+  END {print (m != "" ? m : first)}')
+main_path=${main_path:+$(cd "$main_path" 2>/dev/null && pwd -P)}
 feature_branch=$(git branch --show-current)
+main_branch=${main_path:+$(git -C "$main_path" branch --show-current)}
 
-cd "$main_path" && \
-git checkout main && \
-{ git pull origin main || echo "WARN: local main pull skipped"; } && \
-{ [ "$current_path" = "$main_path" ] || git worktree remove --force "$current_path"; } && \
-git branch -D "$feature_branch" && \
-{ git push origin --delete "$feature_branch" 2>/dev/null || true; } && \
-git fetch --prune && \
-if [ "$current_path" = "$main_path" ]; then echo "mode=clone"; else echo "mode=worktree"; fi && \
-echo "cleanup done"
+# All guards run before any destructive command.
+if [ -z "$main_path" ]; then
+  echo "ERROR: main working tree not found; aborting without changes"; false
+elif [ -z "$feature_branch" ] || [ "$feature_branch" = main ]; then
+  echo "ERROR: not on a feature branch (got '$feature_branch'); aborting without changes"; false
+elif [ "$current_path" != "$main_path" ] && [ "$main_branch" != main ]; then
+  echo "ERROR: main working tree is on '$main_branch', not main; aborting without changes"; false
+else
+  cd "$main_path" && \
+  git checkout main && \
+  { git pull origin main || echo "WARN: local main pull skipped"; } && \
+  { [ "$current_path" = "$main_path" ] || git worktree remove --force "$current_path"; } && \
+  git branch -D "$feature_branch" && \
+  { git push origin --delete "$feature_branch" 2>/dev/null || true; } && \
+  git fetch --prune && \
+  if [ "$current_path" = "$main_path" ]; then echo "mode=clone"; else echo "mode=worktree"; fi && \
+  echo "cleanup done"
+fi
 ```
 
 ### 5. 次セッション案内（text only）

@@ -40,6 +40,6 @@ Claude Code のプロジェクト設定ディレクトリ。
 | `/implement` | 計画に基づく実装 |
 | `/pre-pr-check` | PR 前の品質検証（format/lint/typecheck/build） |
 | `/squash-and-push` | スカッシュ + push + PR 作成 |
-| `/dev-complete` | PR マージ + クリーンアップ |
+| `/dev-complete` | PR マージ + クリーンアップ（clone / worktree 両運用に対応） |
 | `/handover` | セッション引き継ぎ |
 | `/project-init` | プロジェクト初期計画ヒアリング |
