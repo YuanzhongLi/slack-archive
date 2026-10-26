@@ -21,19 +21,30 @@ D1 サイズチェックは同期完了後に実行されるため、その日�
 | アラーム | レベル | 条件 |
 |---------|-------|------|
 | Cron sync failed | error | `scheduled()` handler 内で例外が発生した場合 |
-| D1 database size report | info | `D1_SIZE_REPORT_ENABLED = "true"` かつ閾値未満（毎 cron で定期レポート） |
+| D1 database size report | info | `D1_SIZE_REPORT_FREQUENCY` の周期に該当する日、かつ閾値未満 |
 | D1 database size alert | warn | DB サイズが `D1_ALARM_SIZE_THRESHOLD_MB`（デフォルト 400 MB）以上 |
 
 ### D1 サイズ定期レポート（監視用）
 
-`wrangler.toml` の `D1_SIZE_REPORT_ENABLED = "true"` を設定すると、毎 cron 実行時に現在の DB サイズを Slack に通知する。データ量の増加傾向を監視したい期間に有効にする。
+`wrangler.toml` の `D1_SIZE_REPORT_FREQUENCY` で、閾値未満のときに送る info レポートの頻度を指定する。日付は **JST 基準**で判定する。
+
+| 値 | 通知タイミング |
+|----|---------------|
+| `"Month"` | 毎月 1 日 |
+| `"Week"` | 毎週日曜 |
+| `"Day"` | 毎日（cron 実行のたび） |
+| `"None"` | 通知しない |
 
 ```toml
 [vars]
-D1_SIZE_REPORT_ENABLED = "true"   # "true" で有効 / "false" または削除で無効
+D1_SIZE_REPORT_FREQUENCY = "Month"
 ```
 
-監視が不要になったら `"false"` に変更するか行ごと削除して `npx wrangler deploy` を実行する。
+- 値は完全一致のみ（`"month"` は不可）。未設定や上記以外の値は **`npm run build` の validation（`scripts/validate-env.ts`）で失敗**する
+- 変更後は `make build && npx wrangler deploy`（または Deploy workflow）で反映する。`npx wrangler deploy` は前回 build の成果物（`dist/slack_archive/wrangler.json`）を使うため、build を挟まないと古い値がデプロイされ、validation も走らない
+- 閾値超過の warn アラームは、この設定に関係なく毎日送られる
+- Month は 1 日の cron で同期が失敗するとその月のレポートが送られない（D1 サイズチェックは同期成功時のみ実行されるため）
+- 万一 runtime で不正値を受け取った場合は、通知せず warn ログを出す（`None` 扱い）
 
 ### D1 サイズアラームの繰り返し動作
 
@@ -85,7 +96,7 @@ D1 のデータベースサイズは、任意のクエリ結果に含まれる *
 D1_ALARM_SIZE_THRESHOLD_MB = 400   # デフォルト: 400 MB（D1 free tier 上限 500 MB の 80%）
 ```
 
-変更後は `npx wrangler deploy` で反映する。D1 free tier の上限は **1 DB あたり 500 MB**。Free tier の詳細は `docs/ops/cost.md` を参照。
+変更後は `make build && npx wrangler deploy`（または Deploy workflow）で反映する。D1 free tier の上限は **1 DB あたり 500 MB**。Free tier の詳細は `docs/ops/cost.md` を参照。
 
 ## ローカル開発でのアラーム動作確認
 

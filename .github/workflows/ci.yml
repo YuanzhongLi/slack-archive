@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'src/**'
+      - 'scripts/**'
       - 'migrations/**'
       - 'package.json'
       - 'package-lock.json'

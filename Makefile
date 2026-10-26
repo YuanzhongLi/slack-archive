@@ -69,6 +69,7 @@ ci:
 	$(MAKE) lint
 	$(MAKE) typecheck
 	$(MAKE) test
+	npm run validate:env
 
 # ------------------------------------------------------------
 # Cloudflare

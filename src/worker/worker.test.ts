@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('./db/client', () => ({ createDb: vi.fn() }));
 vi.mock('./services/sync/syncService', () => ({
@@ -29,7 +29,7 @@ function makeEnv(overrides: Partial<Env> = {}): Env {
     DEV_USER_EMAIL: ROOT_EMAIL,
     SLACK_ALARM_WEBHOOK_URL: WEBHOOK_URL,
     D1_ALARM_SIZE_THRESHOLD_MB: '400' as unknown as never,
-    D1_SIZE_REPORT_ENABLED: 'false' as unknown as never,
+    D1_SIZE_REPORT_FREQUENCY: 'None' as unknown as never,
     ...overrides,
   });
 }
@@ -55,18 +55,42 @@ describe('scheduled: D1 size check', () => {
       getD1SizeMbMock.mockResolvedValue(10); // 10 MB < 400 MB
     });
 
-    it('does NOT send alarm when D1_SIZE_REPORT_ENABLED is false', async () => {
-      await runScheduled(makeEnv({ D1_SIZE_REPORT_ENABLED: 'false' as unknown as never }));
+    const freq = (v: string | undefined) =>
+      makeEnv({ D1_SIZE_REPORT_FREQUENCY: v as unknown as never });
+    // 2026-10-31T17:00Z = 2026-11-01 02:00 JST (Sunday, 1st of month): the real cron time
+    const SUNDAY_FIRST = '2026-10-31T17:00:00Z';
+    // 2026-11-02T17:00Z = 2026-11-03 02:00 JST (Tuesday, 3rd)
+    const TUESDAY_THIRD = '2026-11-02T17:00:00Z';
+    // 2026-11-07T17:00Z = 2026-11-08 02:00 JST (Sunday, not the 1st)
+    const SUNDAY_EIGHTH = '2026-11-07T17:00:00Z';
+    // 2026-11-30T17:00Z = 2026-12-01 02:00 JST (Tuesday, the 1st)
+    const TUESDAY_FIRST = '2026-11-30T17:00:00Z';
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('does NOT send alarm when D1_SIZE_REPORT_FREQUENCY is None', async () => {
+      vi.useFakeTimers({ toFake: ['Date'], now: new Date(SUNDAY_FIRST) });
+      await runScheduled(freq('None'));
       expect(sendAlarmMock).not.toHaveBeenCalled();
     });
 
-    it('does NOT send alarm when D1_SIZE_REPORT_ENABLED is unset', async () => {
-      await runScheduled(makeEnv({ D1_SIZE_REPORT_ENABLED: undefined as unknown as never }));
+    it('does NOT send alarm when D1_SIZE_REPORT_FREQUENCY is unset', async () => {
+      vi.useFakeTimers({ toFake: ['Date'], now: new Date(SUNDAY_FIRST) });
+      await runScheduled(freq(undefined));
       expect(sendAlarmMock).not.toHaveBeenCalled();
     });
 
-    it('sends info report when D1_SIZE_REPORT_ENABLED is true', async () => {
-      await runScheduled(makeEnv({ D1_SIZE_REPORT_ENABLED: 'true' as unknown as never }));
+    it('does NOT send alarm when D1_SIZE_REPORT_FREQUENCY is invalid', async () => {
+      vi.useFakeTimers({ toFake: ['Date'], now: new Date(SUNDAY_FIRST) });
+      await runScheduled(freq('month'));
+      expect(sendAlarmMock).not.toHaveBeenCalled();
+    });
+
+    it('sends info report every day when D1_SIZE_REPORT_FREQUENCY is Day', async () => {
+      vi.useFakeTimers({ toFake: ['Date'], now: new Date(TUESDAY_THIRD) });
+      await runScheduled(freq('Day'));
       expect(sendAlarmMock).toHaveBeenCalledOnce();
       const payload = sendAlarmMock.mock.calls[0][1];
       expect(payload.level).toBe('info');
@@ -75,19 +99,61 @@ describe('scheduled: D1 size check', () => {
       expect(payload.fields?.Threshold).toBe('400 MB');
       expect(payload.fields?.['D1 free tier limit']).toBe('500 MB');
     });
+
+    it('Week: sends on Sunday (JST) only', async () => {
+      vi.useFakeTimers({ toFake: ['Date'], now: new Date(SUNDAY_FIRST) });
+      await runScheduled(freq('Week'));
+      expect(sendAlarmMock).toHaveBeenCalledOnce();
+
+      sendAlarmMock.mockClear();
+      vi.setSystemTime(new Date(TUESDAY_THIRD));
+      await runScheduled(freq('Week'));
+      expect(sendAlarmMock).not.toHaveBeenCalled();
+
+      // Sunday that is not the 1st still sends; the 1st that is not Sunday does not
+      vi.setSystemTime(new Date(SUNDAY_EIGHTH));
+      await runScheduled(freq('Week'));
+      expect(sendAlarmMock).toHaveBeenCalledOnce();
+
+      sendAlarmMock.mockClear();
+      vi.setSystemTime(new Date(TUESDAY_FIRST));
+      await runScheduled(freq('Week'));
+      expect(sendAlarmMock).not.toHaveBeenCalled();
+    });
+
+    it('Month: sends on the 1st (JST) only', async () => {
+      vi.useFakeTimers({ toFake: ['Date'], now: new Date(SUNDAY_FIRST) });
+      await runScheduled(freq('Month'));
+      expect(sendAlarmMock).toHaveBeenCalledOnce();
+
+      sendAlarmMock.mockClear();
+      vi.setSystemTime(new Date(TUESDAY_THIRD));
+      await runScheduled(freq('Month'));
+      expect(sendAlarmMock).not.toHaveBeenCalled();
+
+      // The 1st that is not Sunday sends; Sunday that is not the 1st does not
+      vi.setSystemTime(new Date(TUESDAY_FIRST));
+      await runScheduled(freq('Month'));
+      expect(sendAlarmMock).toHaveBeenCalledOnce();
+
+      sendAlarmMock.mockClear();
+      vi.setSystemTime(new Date(SUNDAY_EIGHTH));
+      await runScheduled(freq('Month'));
+      expect(sendAlarmMock).not.toHaveBeenCalled();
+    });
   });
 
   describe('when size equals or exceeds threshold', () => {
     it('sends warn alarm when size equals threshold (boundary)', async () => {
       getD1SizeMbMock.mockResolvedValue(400);
-      await runScheduled(makeEnv({ D1_SIZE_REPORT_ENABLED: 'false' as unknown as never }));
+      await runScheduled(makeEnv({ D1_SIZE_REPORT_FREQUENCY: 'None' as unknown as never }));
       expect(sendAlarmMock).toHaveBeenCalledOnce();
       expect(sendAlarmMock.mock.calls[0][1].level).toBe('warn');
     });
 
     it('sends warn alarm when size exceeds threshold', async () => {
       getD1SizeMbMock.mockResolvedValue(450);
-      await runScheduled(makeEnv({ D1_SIZE_REPORT_ENABLED: 'false' as unknown as never }));
+      await runScheduled(makeEnv({ D1_SIZE_REPORT_FREQUENCY: 'None' as unknown as never }));
       expect(sendAlarmMock).toHaveBeenCalledOnce();
       const payload = sendAlarmMock.mock.calls[0][1];
       expect(payload.level).toBe('warn');
@@ -95,9 +161,9 @@ describe('scheduled: D1 size check', () => {
       expect(payload.fields?.['DB size']).toBe('450.0 MB');
     });
 
-    it('sends warn alarm even when D1_SIZE_REPORT_ENABLED is false', async () => {
+    it('sends warn alarm even when D1_SIZE_REPORT_FREQUENCY is None', async () => {
       getD1SizeMbMock.mockResolvedValue(450);
-      await runScheduled(makeEnv({ D1_SIZE_REPORT_ENABLED: 'false' as unknown as never }));
+      await runScheduled(makeEnv({ D1_SIZE_REPORT_FREQUENCY: 'None' as unknown as never }));
       expect(sendAlarmMock).toHaveBeenCalledOnce();
       expect(sendAlarmMock.mock.calls[0][1].level).toBe('warn');
     });
@@ -135,7 +201,7 @@ describe('scheduled: D1 size check', () => {
 
     it('does not send size alarm when getD1SizeMb throws', async () => {
       getD1SizeMbMock.mockRejectedValue(new Error('D1_ERROR: SQLITE_AUTH'));
-      await runScheduled(makeEnv({ D1_SIZE_REPORT_ENABLED: 'true' as unknown as never }));
+      await runScheduled(makeEnv({ D1_SIZE_REPORT_FREQUENCY: 'Day' as unknown as never }));
       expect(sendAlarmMock).not.toHaveBeenCalled();
     });
   });
@@ -145,7 +211,7 @@ describe('scheduled: D1 size check', () => {
       getD1SizeMbMock.mockResolvedValue(500);
       await runScheduled(
         makeEnv({
-          D1_SIZE_REPORT_ENABLED: 'true' as unknown as never,
+          D1_SIZE_REPORT_FREQUENCY: 'Day' as unknown as never,
           SLACK_ALARM_WEBHOOK_URL: undefined as unknown as never,
         }),
       );
