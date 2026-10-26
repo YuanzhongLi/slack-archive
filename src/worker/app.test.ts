@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import { app } from './app';
 import { makeMockEnv } from './test/helpers';
 
@@ -7,7 +7,7 @@ const noAuthEnv = () =>
   makeMockEnv({ DEV_USER_EMAIL: '', CF_ACCESS_TEAM_DOMAIN: '', CF_ACCESS_AUD: '' });
 
 describe('logging middleware', () => {
-  let logSpy: ReturnType<typeof vi.spyOn>;
+  let logSpy: MockInstance<typeof console.log>;
 
   beforeEach(() => {
     logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});

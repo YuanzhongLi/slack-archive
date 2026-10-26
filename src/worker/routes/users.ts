@@ -11,7 +11,7 @@ const transferRootSchema = z.object({
 });
 
 const createUserSchema = z.object({
-  email: z.string().email(),
+  email: z.email(),
   role: z.enum(['admin', 'viewer']),
 });
 

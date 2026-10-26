@@ -1,10 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import { createLogger } from './logger';
 
 describe('createLogger — JSON mode (default)', () => {
-  let logSpy: ReturnType<typeof vi.spyOn>;
-  let warnSpy: ReturnType<typeof vi.spyOn>;
-  let errorSpy: ReturnType<typeof vi.spyOn>;
+  let logSpy: MockInstance;
+  let warnSpy: MockInstance;
+  let errorSpy: MockInstance;
 
   beforeEach(() => {
     logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -89,7 +89,7 @@ describe('createLogger — JSON mode (default)', () => {
 });
 
 describe('createLogger — child()', () => {
-  let logSpy: ReturnType<typeof vi.spyOn>;
+  let logSpy: MockInstance;
 
   beforeEach(() => {
     logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -138,9 +138,9 @@ describe('createLogger — child()', () => {
 });
 
 describe('createLogger — pretty mode', () => {
-  let logSpy: ReturnType<typeof vi.spyOn>;
-  let warnSpy: ReturnType<typeof vi.spyOn>;
-  let errorSpy: ReturnType<typeof vi.spyOn>;
+  let logSpy: MockInstance;
+  let warnSpy: MockInstance;
+  let errorSpy: MockInstance;
 
   beforeEach(() => {
     logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
