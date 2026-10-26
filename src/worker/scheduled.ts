@@ -1,5 +1,6 @@
 import { createDb } from './db/client';
 import { syncLogs } from './db/schema';
+import { parseD1SizeReportFrequency, shouldSendD1SizeReport } from './lib/d1SizeReport';
 import { createLogger } from './lib/logger';
 import { getD1SizeMb } from './services/alarm/d1SizeCheck';
 import { type AlarmPayload, sendAlarm } from './services/alarm/slackWebhook';
@@ -23,6 +24,18 @@ export async function notifyAlarm(
       error: e instanceof Error ? e.message : String(e),
     });
   }
+}
+
+function shouldSendSizeReport(env: Env, logger: ReturnType<typeof createLogger>): boolean {
+  const frequency = parseD1SizeReportFrequency(env.D1_SIZE_REPORT_FREQUENCY);
+  if (frequency === null) {
+    // build validates wrangler.toml, so this only happens with a manual override; treat as "None".
+    logger.warn('invalid D1_SIZE_REPORT_FREQUENCY, skipping size report', {
+      value: String(env.D1_SIZE_REPORT_FREQUENCY),
+    });
+    return false;
+  }
+  return shouldSendD1SizeReport(frequency, new Date());
 }
 
 export async function runScheduled(env: Env): Promise<void> {
@@ -67,8 +80,8 @@ export async function runScheduled(env: Env): Promise<void> {
           },
           logger,
         );
-      } else if (env.D1_SIZE_REPORT_ENABLED === 'true') {
-        // Regular size report for monitoring (controlled by D1_SIZE_REPORT_ENABLED)
+      } else if (shouldSendSizeReport(env, logger)) {
+        // Periodic size report for monitoring (controlled by D1_SIZE_REPORT_FREQUENCY)
         await notifyAlarm(
           env,
           {

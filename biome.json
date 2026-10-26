@@ -46,11 +46,11 @@
     }
   },
   "files": {
-    "includes": ["src/**", "*.ts", "*.json", "!worker-configuration.d.ts"]
+    "includes": ["src/**", "scripts/**", "*.ts", "*.json", "!worker-configuration.d.ts"]
   },
   "overrides": [
     {
-      "includes": ["src/worker.ts", "src/worker/lib/logger.ts"],
+      "includes": ["src/worker.ts", "src/worker/lib/logger.ts", "scripts/**"],
       "linter": {
         "rules": {
           "suspicious": {
