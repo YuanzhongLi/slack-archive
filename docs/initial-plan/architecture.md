@@ -4,7 +4,7 @@
 
 | カテゴリ | 技術 | 選定理由 |
 |---------|------|---------|
-| Runtime | Node.js v24 | 指定要件 |
+| Runtime | Node.js v26 | 指定要件 |
 | Frontend | React 19 + Vite | Cloudflare Workers上でのSPA、qipaiqiu-paymentと同構成 |
 | Backend | Hono | Cloudflare Workers向け軽量フレームワーク |
 | ORM | Drizzle ORM | Cloudflare D1との相性が良い、型安全 |
