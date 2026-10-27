@@ -137,16 +137,50 @@ fetchMessages() でメッセージを取得
 
 ---
 
+## schema 不一致で捨てた要素の確認
+
+Slack のレスポンスを zod で検証し、合わない要素はスキップする（任意フィールドの `null` は欠落扱いで受け入れるため、捨てられるのは必須フィールドの欠落・型違いなど）。捨てた要素があると、`fetchChannels` / `fetchMessages` / `fetchThreadReplies` / `fetchUsers` の呼び出しごとに 1 回、次の warn ログが出る（エラーで途中終了した場合も、それまでに捨てた分は出る）:
+
+```json
+{"level":"warn","msg":"dropped Slack entries that did not match the expected schema",
+ "trigger":"cron","service":"syncAll","fn":"fetchMessages","channel":"C0123456789",
+ "count":3,"entries":[{"id":"1700000000.000100","fields":["text"]}],"truncated":false}
+```
+
+| フィールド | 内容 |
+|-----------|------|
+| `service` | `syncAll`（日次差分同期・手動同期）か `fullResyncAll`（90〜87 日前の窓の再同期） |
+| `fn` | どの取得で捨てたか |
+| `channel` | `fetchMessages` / `fetchThreadReplies` のみ。Slack のチャンネル ID（ts は channel ごとにしか一意でないため必須） |
+| `thread_ts` | `fetchThreadReplies` のみ。スレッド親の ts |
+| `count` / `entries` / `truncated` | 捨てた総数 / 先頭 20 件までの `id`（ts か id、32 文字で切る）と不一致フィールド名 / 20 件を超えたか |
+
+- Workers Logs で `dropped Slack entries` を検索する
+- 本文・ユーザー名・profile の値はログに出ない。内容は Slack 側で `channel` と `id`（ts）から確認する
+- アーカイブにメッセージが足りないときは、まずこのログを確認する
+- **`fullResyncAll` の窓内で捨てた要素は、D1 に既にある同じ ts の行の削除につながる**（`fullResyncWindowForChannel` は API が返さなかった ts の行とそのスレッド返信を削除する）。このログが `service: fullResyncAll` で出ているときは、データが消えうるので優先して調べる
+- `type` が `message` でないメッセージは schema 不一致ではなくフィルタで除外されるため、このログには出ない（`type: null` のメッセージも同様）
+
+---
+
 ## レート制限対応
 
 ```
-API呼び出しのたびに 200ms sleep
+API呼び出し（ページ取得）のたびに 200ms sleep
   │
   └─ レート制限エラー（429）が発生した場合
-       └─ Retry-After ヘッダーの秒数だけ待機
-            └─ 最大 3回リトライ
-                 └─ 3回失敗したら例外をスロー → sync 全体がエラー終了
+       └─ @slack/web-api の組み込みリトライに任せる（client.ts に自前のリトライは無い）
+            ├─ Retry-After ヘッダーがあれば、その秒数だけリクエストキューを止めて待つ
+            ├─ その後、既定のリトライポリシー tenRetriesInAboutThirtyMinutes の
+            │  バックオフ（指数的に増える待ち時間）を挟んで再試行（最大 10 回・約 30 分）
+            └─ 使い切ったら例外をスロー → sync 全体がエラー終了
 ```
+
+- Retry-After が無い・不正な 429 はリトライされず即エラーになる
+- 同じリトライポリシーは 429 以外の失敗（5xx・ネットワークエラーなど）にも効く
+- `client.ts` は `WebClient` の `retryConfig` を上書きしていない。ライブラリのバージョンを上げるとき、既定のリトライポリシーが変わっていないか確認する
+- 200ms の sleep はレート制限を避けるための間隔で、429 のリトライとは別（`SLEEP_MS`、`.claude/rules/slack-api.md` も参照）
+- **未確認**: Cron Trigger の実行時間上限が約 30 分のリトライより短い場合、リトライを使い切る前に実行が打ち切られ、`sync_logs` にエラーが残らない可能性がある
 
 ---
 

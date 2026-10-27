@@ -270,8 +270,8 @@ export async function fullResyncAll(env: Env, db: Db, logger: Logger): Promise<v
   if (!env.SLACK_BOT_TOKEN) {
     throw new Error('SLACK_BOT_TOKEN is not configured');
   }
-  const client = createSlackClient(env.SLACK_BOT_TOKEN);
   const log = logger.child({ service: 'fullResyncAll' });
+  const client = createSlackClient(env.SLACK_BOT_TOKEN, log);
 
   // Window: 90 days ago to 87 days ago (within Slack's free plan 90-day retention)
   const nowSec = Math.floor(Date.now() / 1000);
@@ -297,8 +297,8 @@ export async function syncAll(
   if (!env.SLACK_BOT_TOKEN) {
     throw new Error('SLACK_BOT_TOKEN is not configured');
   }
-  const client = createSlackClient(env.SLACK_BOT_TOKEN);
   const log = logger.child({ service: 'syncAll' });
+  const client = createSlackClient(env.SLACK_BOT_TOKEN, log);
 
   log.info('sync started');
 

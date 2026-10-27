@@ -26,7 +26,7 @@ Claude Code のプロジェクト設定ディレクトリ。
 | `auth.md` | CF Access 認証・認可・role 設計 |
 | `hono.md` | Hono ルーティング・エラーハンドリング規約 |
 | `react.md` | React ベストプラクティス（useEffect 等） |
-| `slack-api.md` | Slack API クライアント・レート制限・差分同期 |
+| `slack-api.md` | Slack API クライアント・レート制限・レスポンス検証と欠落の可視化・差分同期 |
 | `db-migration.md` | Drizzle ORM + D1 マイグレーション管理 |
 | `lint.md` | Biome lint/format・TypeScript 型ルール |
 | `milestones.md` | マイルストーン管理・更新タイミング |

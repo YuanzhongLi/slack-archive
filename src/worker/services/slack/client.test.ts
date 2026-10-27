@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
+import { z } from 'zod';
 
 // The zod schemas in client.ts are intentionally private, so everything is verified through the
 // public client API with @slack/web-api's WebClient replaced by mocks.
@@ -37,7 +38,14 @@ vi.mock('@slack/web-api', () => ({
   },
 }));
 
-import { createSlackClient } from './client';
+import type { Logger } from '../../lib/logger';
+import {
+  type SlackChannel,
+  type SlackClient,
+  type SlackMessage,
+  type SlackUser,
+  createSlackClient,
+} from './client';
 
 // Each page request of a fetch* function is preceded by a sleep, so timers are faked and flushed
 // explicitly. Racing the promise against the timer flush keeps a rejection from going unhandled.
@@ -46,7 +54,21 @@ async function settle<T>(promise: Promise<T>): Promise<T> {
   return result;
 }
 
-const makeClient = () => createSlackClient('xoxb-test-token');
+function makeLogger() {
+  const warn = vi.fn<(msg: string, ctx?: Record<string, unknown>) => void>();
+  const logger: Logger = {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn,
+    error: vi.fn(),
+    child: () => logger,
+  };
+  return { logger, warn };
+}
+
+// Most tests do not care about logging; the logger is required by createSlackClient.
+const silentLogger = makeLogger().logger;
+const makeClient = (logger: Logger = silentLogger) => createSlackClient('xoxb-test-token', logger);
 
 beforeEach(() => {
   // clearMocks only clears calls; reset also drops any unconsumed mockResolvedValueOnce.
@@ -60,15 +82,15 @@ afterEach(() => {
 
 describe('createSlackClient', () => {
   it('creates the WebClient with the given token', () => {
-    createSlackClient('xoxb-secret-token');
+    createSlackClient('xoxb-secret-token', silentLogger);
     expect(mocks.webClientCtor).toHaveBeenCalledExactlyOnceWith('xoxb-secret-token');
   });
 });
 
 describe('rate-limit pause', () => {
-  // The exact sleep length is deliberately not pinned (the code uses 200ms while
-  // .claude/rules/slack-api.md mentions 1s). What matters is that every page request is preceded
-  // by a pause that is neither missing nor excessive.
+  // The exact sleep length is deliberately not pinned (the code uses 200ms, see SLEEP_MS and
+  // .claude/rules/slack-api.md). What matters is that every page request is preceded by a pause
+  // that is neither missing nor excessive.
   const MIN_PAUSE_MS = 100;
   const MAX_PAUSE_MS = 1000;
 
@@ -152,15 +174,24 @@ describe('fetchChannels', () => {
     expect(result).toEqual([{ id: 'C5', name: 'valid', is_private: false }]);
   });
 
-  // Current behavior, not an endorsed spec: optional fields accept undefined but not null, so an
-  // explicit null drops the whole channel. Accepting null would be a deliberate change (use
-  // .nullish() and update this test).
-  it('drops a channel whose optional field is null', async () => {
+  // Slack may send an explicit null for an optional field; it is treated like a missing field
+  // instead of dropping the whole channel.
+  it('treats a null is_private as false instead of dropping the channel', async () => {
     mocks.conversationsList.mockResolvedValue({
-      channels: [
-        { id: 'C1', name: 'null-flag', is_private: null },
-        { id: 'C2', name: 'ok' },
-      ],
+      channels: [{ id: 'C1', name: 'null-flag', is_private: null }],
+    });
+
+    const result = await settle(makeClient().fetchChannels());
+
+    expect(result).toEqual([{ id: 'C1', name: 'null-flag', is_private: false }]);
+  });
+
+  it.each([
+    ['id', { id: null, name: 'x' }],
+    ['name', { id: 'C1', name: null }],
+  ])('still drops a channel whose required field %s is null', async (_field, broken) => {
+    mocks.conversationsList.mockResolvedValue({
+      channels: [broken, { id: 'C2', name: 'ok' }],
     });
 
     const result = await settle(makeClient().fetchChannels());
@@ -278,20 +309,48 @@ describe('fetchMessages', () => {
     expect(result).toEqual([{ type: 'message', ts: '9.0', text: 'valid' }]);
   });
 
-  // Current behavior, not an endorsed spec: optional fields accept undefined but not null, so a
-  // message carrying an explicit null in any of them is dropped as a whole (it would silently be
-  // missing from the archive). Accepting null would be a deliberate change (use .nullish() and
-  // update this test).
+  // Slack may send an explicit null for an optional field; it is treated like a missing field
+  // instead of dropping the whole message.
   it.each([
     'user',
-    'text',
     'thread_ts',
     'subtype',
-  ])('drops a message whose optional field %s is null', async (field) => {
+  ] as const)('keeps a message whose %s is null and treats it as missing', async (field) => {
+    mocks.conversationsHistory.mockResolvedValue({
+      messages: [{ type: 'message', ts: '1.0', text: 'ok', [field]: null }],
+    });
+
+    const result = await settle(makeClient().fetchMessages('C1'));
+
+    expect(result).toHaveLength(1);
+    expect(result[0][field]).toBeUndefined();
+  });
+
+  it('defaults a null text to an empty string', async () => {
+    mocks.conversationsHistory.mockResolvedValue({
+      messages: [{ type: 'message', ts: '1.0', user: 'U1', text: null }],
+    });
+
+    const result = await settle(makeClient().fetchMessages('C1'));
+
+    expect(result).toEqual([{ type: 'message', ts: '1.0', user: 'U1', text: '' }]);
+  });
+
+  // A null type is no longer a schema failure, but such a message is still not a plain "message",
+  // so the type filter excludes it.
+  it('excludes a message whose type is null through the type filter', async () => {
+    mocks.conversationsHistory.mockResolvedValue({
+      messages: [{ type: null, ts: '1.0', text: 'ok' }],
+    });
+
+    expect(await settle(makeClient().fetchMessages('C1'))).toEqual([]);
+  });
+
+  it('still drops a message whose ts is null', async () => {
     mocks.conversationsHistory.mockResolvedValue({
       messages: [
-        { type: 'message', ts: '1.0', user: 'U1', text: 'ok', [field]: null },
-        { type: 'message', ts: '2.0', user: 'U1', text: 'ok' },
+        { type: 'message', ts: null, text: 'no ts' },
+        { type: 'message', ts: '2.0', text: 'ok' },
       ],
     });
 
@@ -403,21 +462,47 @@ describe('fetchThreadReplies', () => {
     expect(result).toEqual([{ type: 'message', ts: '10.4', user: 'U1', text: 'valid' }]);
   });
 
-  // Current behavior, not an endorsed spec: optional fields accept undefined but not null, so a
-  // reply carrying an explicit null in any of them is dropped as a whole. Accepting null would be
-  // a deliberate change (use .nullish() and update this test).
+  // Slack may send an explicit null for an optional field; it is treated like a missing field
+  // instead of dropping the whole reply.
   it.each([
     'type',
     'subtype',
     'user',
-    'text',
     'thread_ts',
-  ])('drops a reply whose optional field %s is null', async (field) => {
+  ] as const)('keeps a reply whose %s is null and treats it as missing', async (field) => {
     mocks.conversationsReplies.mockResolvedValue({
       messages: [
         { type: 'message', ts: '10.0', text: 'parent' },
-        { type: 'message', ts: '10.1', user: 'U1', text: 'ok', [field]: null },
-        { type: 'message', ts: '10.2', user: 'U1', text: 'ok' },
+        { type: 'message', ts: '10.1', text: 'ok', [field]: null },
+      ],
+    });
+
+    const result = await settle(makeClient().fetchThreadReplies('C1', '10.0'));
+
+    expect(result).toHaveLength(1);
+    expect(result[0].ts).toBe('10.1');
+    expect(result[0][field]).toBeUndefined();
+  });
+
+  it('defaults a null reply text to an empty string', async () => {
+    mocks.conversationsReplies.mockResolvedValue({
+      messages: [
+        { type: 'message', ts: '10.0', text: 'parent' },
+        { type: 'message', ts: '10.1', user: 'U1', text: null },
+      ],
+    });
+
+    const result = await settle(makeClient().fetchThreadReplies('C1', '10.0'));
+
+    expect(result).toEqual([{ type: 'message', ts: '10.1', user: 'U1', text: '' }]);
+  });
+
+  it('still drops a reply whose ts is null', async () => {
+    mocks.conversationsReplies.mockResolvedValue({
+      messages: [
+        { type: 'message', ts: '10.0', text: 'parent' },
+        { type: 'message', ts: null, text: 'no ts' },
+        { type: 'message', ts: '10.2', text: 'ok' },
       ],
     });
 
@@ -573,22 +658,49 @@ describe('fetchUsers', () => {
     expect(result.map((u) => u.id)).toEqual(['U9']);
   });
 
-  // Current behavior, not an endorsed spec: optional fields accept undefined but not null, so a
-  // user carrying an explicit null in any of them is dropped as a whole (including the flags,
-  // because .default(false) only fills in undefined). Accepting null would be a deliberate change
-  // (use .nullish() and update this test).
+  // Slack may send an explicit null for an optional field; it is treated like a missing field
+  // instead of dropping the whole user. A null flag counts as false (the default).
   it.each([
-    ['deleted', { deleted: null }],
-    ['is_bot', { is_bot: null }],
-    ['is_app_user', { is_app_user: null }],
-    ['profile', { profile: null }],
-    ['profile.display_name', { profile: { display_name: null } }],
-    ['profile.real_name', { profile: { real_name: null } }],
-    ['profile.image_72', { profile: { image_72: null } }],
-  ])('drops a user whose optional field %s is null', async (_field, override) => {
+    'deleted',
+    'is_bot',
+    'is_app_user',
+  ] as const)('keeps a user whose %s is null and treats it as false', async (field) => {
+    mocks.usersList.mockResolvedValue({ members: [{ id: 'U1', [field]: null }] });
+
+    const result = await settle(makeClient().fetchUsers());
+
+    expect(result).toHaveLength(1);
+    expect(result[0][field]).toBe(false);
+  });
+
+  it('keeps a user whose profile is null and treats it as missing', async () => {
+    mocks.usersList.mockResolvedValue({ members: [{ id: 'U1', profile: null }] });
+
+    const result = await settle(makeClient().fetchUsers());
+
+    expect(result).toHaveLength(1);
+    expect(result[0].profile).toBeUndefined();
+  });
+
+  it.each([
+    'display_name',
+    'real_name',
+    'image_72',
+  ] as const)('keeps a user whose profile.%s is null and treats it as missing', async (field) => {
     mocks.usersList.mockResolvedValue({
-      members: [{ id: 'U1', ...override }, { id: 'U2' }],
+      members: [
+        { id: 'U1', profile: { display_name: 'a', real_name: 'b', image_72: 'c', [field]: null } },
+      ],
     });
+
+    const result = await settle(makeClient().fetchUsers());
+
+    expect(result).toHaveLength(1);
+    expect(result[0].profile?.[field]).toBeUndefined();
+  });
+
+  it('still drops a user whose id is null', async () => {
+    mocks.usersList.mockResolvedValue({ members: [{ id: null }, { id: 'U2' }] });
 
     const result = await settle(makeClient().fetchUsers());
 
@@ -616,5 +728,272 @@ describe('fetchUsers', () => {
     expect(result.map((u) => u.id)).toEqual(['U1', 'U2']);
     expect(mocks.usersList).toHaveBeenCalledTimes(2);
     expect(mocks.usersList.mock.calls[1][0].cursor).toBe('page-2');
+  });
+});
+
+describe('dropped entry reporting', () => {
+  const MESSAGE = 'dropped Slack entries that did not match the expected schema';
+
+  // Parse the logged context instead of casting it, so a change in its shape fails loudly.
+  const loggedSchema = z.object({
+    fn: z.string(),
+    count: z.number(),
+    truncated: z.boolean(),
+    entries: z.array(z.object({ id: z.string().optional(), fields: z.array(z.string()) })),
+  });
+  const firstWarning = (warn: ReturnType<typeof makeLogger>['warn']) =>
+    loggedSchema.parse(warn.mock.calls[0][1]);
+
+  type Api = 'conversationsList' | 'conversationsHistory' | 'conversationsReplies' | 'usersList';
+  type Fetcher = {
+    name: string;
+    run: (client: SlackClient) => Promise<unknown>;
+    api: Api;
+    // Extra context that locates the fetch in Slack (channel id, parent ts).
+    where: Record<string, string>;
+    // Builds an API response page from raw entries (replies prepend the thread parent).
+    page: (entries: unknown[], nextCursor?: string) => unknown;
+    // The i-th entry that fails the schema, its logged id and offending fields.
+    bad: (i: number) => unknown;
+    badId: (i: number) => string;
+    badFields: string[];
+    // An entry with no id/ts that carries content which must never reach the log.
+    leaky: unknown;
+  };
+
+  const message = (i: number) => ({ type: 'message', ts: `${i}.0`, text: 42 });
+  const fetchers: readonly Fetcher[] = [
+    {
+      name: 'fetchChannels',
+      run: (client) => client.fetchChannels(),
+      api: 'conversationsList',
+      where: {},
+      page: (entries, next) => ({ channels: entries, response_metadata: { next_cursor: next } }),
+      bad: (i) => ({ id: `C${i}` }),
+      badId: (i) => `C${i}`,
+      badFields: ['name'],
+      leaky: { name: 'TOP-SECRET channel name' },
+    },
+    {
+      name: 'fetchMessages',
+      run: (client) => client.fetchMessages('C1'),
+      api: 'conversationsHistory',
+      where: { channel: 'C1' },
+      page: (entries, next) => ({ messages: entries, response_metadata: { next_cursor: next } }),
+      bad: message,
+      badId: (i) => `${i}.0`,
+      badFields: ['text'],
+      leaky: { type: 'message', text: 'TOP-SECRET message body', user: 'TOP-SECRET user' },
+    },
+    {
+      name: 'fetchThreadReplies',
+      run: (client) => client.fetchThreadReplies('C1', '10.0'),
+      api: 'conversationsReplies',
+      where: { channel: 'C1', thread_ts: '10.0' },
+      page: (entries, next) => ({
+        messages: [{ type: 'message', ts: '10.0', text: 'parent' }, ...entries],
+        response_metadata: { next_cursor: next },
+      }),
+      bad: message,
+      badId: (i) => `${i}.0`,
+      badFields: ['text'],
+      leaky: { type: 'message', text: 'TOP-SECRET reply body' },
+    },
+    {
+      name: 'fetchUsers',
+      run: (client) => client.fetchUsers(),
+      api: 'usersList',
+      where: {},
+      page: (entries, next) => ({ members: entries, response_metadata: { next_cursor: next } }),
+      bad: (i) => ({ id: `U${i}`, deleted: 'no' }),
+      badId: (i) => `U${i}`,
+      badFields: ['deleted'],
+      leaky: { profile: { real_name: 'TOP-SECRET Person', display_name: 5 } },
+    },
+  ];
+
+  it.each(
+    fetchers,
+  )('$name warns once with the function, location, count, id and offending field', async (f) => {
+    const { logger, warn } = makeLogger();
+    mocks[f.api].mockResolvedValue(f.page([f.bad(1)]));
+
+    await settle(f.run(makeClient(logger)));
+
+    expect(warn).toHaveBeenCalledExactlyOnceWith(MESSAGE, {
+      fn: f.name,
+      ...f.where,
+      count: 1,
+      entries: [{ id: f.badId(1), fields: f.badFields }],
+      truncated: false,
+    });
+  });
+
+  it.each(fetchers)('$name aggregates drops across pages into a single warning', async (f) => {
+    const { logger, warn } = makeLogger();
+    mocks[f.api]
+      .mockResolvedValueOnce(f.page([f.bad(1)], 'page-2'))
+      .mockResolvedValueOnce(f.page([f.bad(2)]));
+
+    await settle(f.run(makeClient(logger)));
+
+    expect(warn).toHaveBeenCalledOnce();
+    const logged = firstWarning(warn);
+    expect(logged.count).toBe(2);
+    expect(logged.entries.map((e) => e.id)).toEqual([f.badId(1), f.badId(2)]);
+  });
+
+  it.each(fetchers)('$name does not carry drops over between calls on one client', async (f) => {
+    const { logger, warn } = makeLogger();
+    const client = makeClient(logger);
+    mocks[f.api]
+      .mockResolvedValueOnce(f.page([f.bad(1)]))
+      .mockResolvedValueOnce(f.page([f.bad(2)]));
+
+    await settle(f.run(client));
+    await settle(f.run(client));
+
+    expect(warn).toHaveBeenCalledTimes(2);
+    const second = loggedSchema.parse(warn.mock.calls[1][1]);
+    expect(second.count).toBe(1);
+    expect(second.entries.map((e) => e.id)).toEqual([f.badId(2)]);
+  });
+
+  it.each(fetchers)('$name marks truncation only above 20 logged entries', async (f) => {
+    const exactly20 = makeLogger();
+    mocks[f.api].mockResolvedValueOnce(f.page(Array.from({ length: 20 }, (_, i) => f.bad(i))));
+    await settle(f.run(makeClient(exactly20.logger)));
+    const at20 = firstWarning(exactly20.warn);
+    expect([at20.count, at20.entries.length, at20.truncated]).toEqual([20, 20, false]);
+
+    const over20 = makeLogger();
+    mocks[f.api].mockResolvedValueOnce(f.page(Array.from({ length: 21 }, (_, i) => f.bad(i))));
+    await settle(f.run(makeClient(over20.logger)));
+    const at21 = firstWarning(over20.warn);
+    expect([at21.count, at21.entries.length, at21.truncated]).toEqual([21, 20, true]);
+  });
+
+  it.each(fetchers)('$name still reports the drops seen before an API failure', async (f) => {
+    const { logger, warn } = makeLogger();
+    mocks[f.api]
+      .mockResolvedValueOnce(f.page([f.bad(1)], 'page-2'))
+      .mockRejectedValueOnce(new Error('boom'));
+
+    await expect(settle(f.run(makeClient(logger)))).rejects.toThrow('boom');
+
+    expect(warn).toHaveBeenCalledOnce();
+    expect(firstWarning(warn).count).toBe(1);
+  });
+
+  it.each(fetchers)('$name never logs message text, names or profile values', async (f) => {
+    const { logger, warn } = makeLogger();
+    mocks[f.api].mockResolvedValue(f.page([f.leaky]));
+
+    await settle(f.run(makeClient(logger)));
+
+    expect(warn).toHaveBeenCalledOnce();
+    expect(JSON.stringify(warn.mock.calls)).not.toContain('TOP-SECRET');
+  });
+
+  it('lists each offending field once, using dotted paths for nested fields', async () => {
+    const { logger, warn } = makeLogger();
+    mocks.usersList.mockResolvedValue({
+      members: [
+        { id: 'U1', deleted: 'x', is_bot: 'y', profile: { display_name: 5, real_name: 6 } },
+      ],
+    });
+
+    await settle(makeClient(logger).fetchUsers());
+
+    const { fields } = firstWarning(warn).entries[0];
+    expect([...fields].sort()).toEqual([
+      'deleted',
+      'is_bot',
+      'profile.display_name',
+      'profile.real_name',
+    ]);
+  });
+
+  it('logs no id for entries that are not objects or have a non-string id, and caps long ids', async () => {
+    const { logger, warn } = makeLogger();
+    mocks.conversationsList.mockResolvedValue({
+      channels: [null, 'channel', { id: 7 }, { id: 'C'.repeat(100) }],
+    });
+
+    await settle(makeClient(logger).fetchChannels());
+
+    const { entries } = firstWarning(warn);
+    expect(entries[0]).toEqual({ id: undefined, fields: ['(root)'] });
+    expect(entries[1]).toEqual({ id: undefined, fields: ['(root)'] });
+    expect(entries[2].id).toBeUndefined();
+    expect(entries[3].id).toBe('C'.repeat(32));
+  });
+
+  // Each fetcher identifies entries by its own key (channels/users: id, messages: ts), so a stray
+  // field of the other kind is never logged.
+  it('identifies messages by ts and ignores a stray id field', async () => {
+    const { logger, warn } = makeLogger();
+    mocks.conversationsHistory.mockResolvedValue({
+      messages: [{ id: 'STRAY-ID', type: 'message', ts: '1.0', text: 42 }],
+    });
+
+    await settle(makeClient(logger).fetchMessages('C1'));
+
+    expect(firstWarning(warn).entries[0].id).toBe('1.0');
+    expect(JSON.stringify(warn.mock.calls)).not.toContain('STRAY-ID');
+  });
+
+  it('does not warn when nothing failed the schema, including intentional filtering', async () => {
+    const { logger, warn } = makeLogger();
+    mocks.conversationsHistory.mockResolvedValue({
+      messages: [
+        { type: 'message', subtype: 'channel_join', ts: '1.0' },
+        { type: 'message', ts: '2.0', user: null, text: null },
+      ],
+    });
+    mocks.conversationsReplies.mockResolvedValue({
+      messages: [
+        { type: 'message', ts: '10.0', text: 'parent' },
+        { type: 'message', ts: '', text: 'empty ts' },
+      ],
+    });
+    mocks.usersList.mockResolvedValue({
+      members: [{ id: 'U1', is_bot: true }, { id: 'USLACKBOT' }, { id: 'U2', profile: null }],
+    });
+
+    await settle(makeClient(logger).fetchMessages('C1'));
+    await settle(makeClient(logger).fetchThreadReplies('C1', '10.0'));
+    await settle(makeClient(logger).fetchUsers());
+
+    expect(warn).not.toHaveBeenCalled();
+  });
+});
+
+// The null handling is built from .transform(), which would turn optional keys into required ones.
+// Pin the element types that syncService.ts consumes so such a regression fails typecheck.
+describe('element types', () => {
+  it('stay unchanged', () => {
+    expectTypeOf<SlackChannel>().toEqualTypeOf<{ id: string; name: string; is_private: boolean }>();
+    expectTypeOf<SlackMessage>().toEqualTypeOf<{
+      ts: string;
+      type?: string | undefined;
+      subtype?: string | undefined;
+      user?: string | undefined;
+      text: string;
+      thread_ts?: string | undefined;
+    }>();
+    expectTypeOf<SlackUser>().toEqualTypeOf<{
+      id: string;
+      deleted: boolean;
+      is_bot: boolean;
+      is_app_user: boolean;
+      profile?:
+        | {
+            display_name?: string | undefined;
+            real_name?: string | undefined;
+            image_72?: string | undefined;
+          }
+        | undefined;
+    }>();
   });
 });
