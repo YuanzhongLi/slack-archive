@@ -53,11 +53,11 @@ https://github.com/YuanzhongLi/slack-archive/issues/33（項目 1）
 ## pre-pr-check で反映した指摘
 - `settle()` を `Promise.all([promise, vi.runAllTimersAsync()])` にし、reject するテストでも unhandled rejection にならないようにした（API エラー伝播のテストを追加）
 - mock の引数を `vi.fn<(params: PageParams) => Promise<unknown>>()` で型付けし、`mock.calls[i][0].cursor` の typo が型エラーになるようにした（`any` / `as` は不使用）
-- sleep は長さを固定しない: 4 つの `fetch*` それぞれで「各ページ前に 100ms 以上 1000ms 以下の待ち」を検証（実装は 200ms、`.claude/rules/slack-api.md` は 1000ms と食い違うため値の固定を避けた。`joinChannel` は待たない）
+- sleep は長さを固定しない: 4 つの `fetch*` それぞれで「各ページ前に 100ms 以上 1000ms 以下の待ち」を検証（当時は実装 200ms と `.claude/rules/slack-api.md` の 1000ms が食い違っていたため値の固定を避けた。`joinChannel` は待たない）
 - `null` で要素ごと落ちる挙動は、各 `fetch*` の「現状の挙動であり仕様ではない」と明記したテストに集約し、`type` / `subtype` / `deleted` / `is_app_user` / `profile` とその配下も固定した
 - `fetchThreadReplies` の「全ページ先頭を skip」は Slack API が 2 ページ目以降にも親を含むかが未確認であることをコメントに明記した
 - `fetchMessages` は空文字 `ts` を通し `fetchThreadReplies` は落とす非対称を、それぞれ現状の挙動としてテスト化した
 
 ## 未解決（ユーザー確認事項）
-- `.claude/rules/slack-api.md` は「ページネーションを含むループでは 1000ms 待つ」と定めているが、実装（`SLEEP_MS`）は 200ms。どちらを正とするかは別途決める（テストは長さに依存しない）
-- Slack が任意フィールドに `null` を返すと要素が黙って落ちる既知の制約（仕様変更は別 issue）
+- ~~sleep の長さ（rules は 1000ms、実装は 200ms）~~ → **解決**: 実装の 200ms を正とし、`.claude/rules/slack-api.md` を実装に合わせて更新した（chore/align-rules-and-task-doc）。テストは長さに依存しないまま
+- Slack が任意フィールドに `null` を返すと要素が黙って落ちる既知の制約（仕様変更は別 issue として切り出し済み）

@@ -30,6 +30,8 @@ feature/xxx  -->  main
 - 機能追加: `feature/xxx` または `feature/add-xxx`
 - バグ修正: `fix/xxx` または `bugfix/xxx`
 - 緊急修正: `hotfix/xxx`
+- 依存更新・CI・設定・docs・skill/rules などの保守作業: `chore/xxx`
+- テストの追加・改善のみ（本番コードの変更なし）: `test/xxx`
 
 ## コミットルール
 - commit message は**必ず英語**で、変更内容を簡潔に説明する
