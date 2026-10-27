@@ -349,13 +349,16 @@ describe('syncAll', () => {
     expect(result.messageCount).toBe(0);
   });
 
-  it('creates SlackClient with the token from env', async () => {
+  it('creates SlackClient with the token from env and the syncAll child logger', async () => {
     const client = makeSlackClient();
     createSlackClientMock.mockReturnValue(client);
+    const child = createLogger();
+    const logger = { ...createLogger(), child: vi.fn(() => child) };
 
-    await syncAll(mockEnv, db, createLogger());
+    await syncAll(mockEnv, db, logger);
 
-    expect(createSlackClientMock).toHaveBeenCalledWith('xoxb-test');
+    expect(logger.child).toHaveBeenCalledWith({ service: 'syncAll' });
+    expect(createSlackClientMock).toHaveBeenCalledWith('xoxb-test', child);
   });
 });
 
@@ -753,6 +756,17 @@ describe('fullResyncAll', () => {
     expect(fetchMessages).toHaveBeenCalledTimes(2);
     expect(fetchMessages).toHaveBeenCalledWith('C001', expect.any(String), expect.any(String));
     expect(fetchMessages).toHaveBeenCalledWith('C002', expect.any(String), expect.any(String));
+  });
+
+  it('creates SlackClient with the token from env and the fullResyncAll child logger', async () => {
+    createSlackClientMock.mockReturnValue(makeSlackClient());
+    const child = createLogger();
+    const logger = { ...createLogger(), child: vi.fn(() => child) };
+
+    await fullResyncAll(mockEnv, db, logger);
+
+    expect(logger.child).toHaveBeenCalledWith({ service: 'fullResyncAll' });
+    expect(createSlackClientMock).toHaveBeenCalledWith('xoxb-test', child);
   });
 
   it('uses a window of 90 days ago to 87 days ago', async () => {

@@ -21,6 +21,15 @@ Slack API には Tier ごとのレート制限がある（Tier 3: 50+ RPM）。
 - `429 Too Many Requests` は `@slack/web-api` の組み込みリトライ（`Retry-After` を尊重）に任せ、自前のリトライは書かない
 - 並列リクエストは最大 3〜5 本に制限する
 
+## レスポンスのパースと欠落の可視化
+
+`src/worker/services/slack/client.ts` は zod でレスポンスを検証する。
+
+- 任意フィールドの `null` は `undefined`（既定値があるものは既定値）として扱い、要素を捨てない。必須フィールド（`id` / `name` / `ts`）の `null` は不正として捨てる
+- schema に合わず捨てた要素は、`fetch*` の呼び出しごとに 1 回 `logger.warn` で件数・id/ts・不一致フィールド名と取得場所（`channel` / `thread_ts`）を出す。本文・ユーザー名・profile の値は**絶対にログへ出さない**
+- `createSlackClient(token, logger)` の `logger` は必須。省略可能にすると、また黙って捨てる状態に戻れてしまう
+- 新しい任意フィールドを足すときは `nullishAsUndefined` / `nullishWithDefault` を使う（`.optional()` 単体だと `null` で要素ごと落ちる）
+
 ## ページネーション
 
 `conversations.history` / `conversations.list` は cursor ベースのページネーション:
