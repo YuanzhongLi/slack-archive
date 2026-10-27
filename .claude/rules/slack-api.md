@@ -17,8 +17,8 @@
 
 Slack API には Tier ごとのレート制限がある（Tier 3: 50+ RPM）。
 
-- ページネーションを含むループでは `await new Promise(r => setTimeout(r, 1000))` を入れる
-- `429 Too Many Requests` 時は `Retry-After` ヘッダーの秒数だけ待ってリトライする
+- ページネーションを含むループでは、各ページ取得の前に 200ms 待つ（`src/worker/services/slack/client.ts` の `SLEEP_MS`。これを正とする）
+- `429 Too Many Requests` は `@slack/web-api` の組み込みリトライ（`Retry-After` を尊重）に任せ、自前のリトライは書かない
 - 並列リクエストは最大 3〜5 本に制限する
 
 ## ページネーション
